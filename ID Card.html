@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ID Card A4 Layout Tool</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css">
+<style>
+  :root{
+    --bg: #EDEFEC;
+    --panel: #FFFFFF;
+    --ink: #1B211D;
+    --ink-soft: #5B655E;
+    --line: #D8DCD6;
+    --accent: #2B5D48;
+    --accent-soft: #E4EEE8;
+    --paper: #FFFFFF;
+    --paper-edge: #C9CFC9;
+    --danger: #A6432E;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family: 'Segoe UI', 'Noto Sans Devanagari', system-ui, -apple-system, sans-serif;
+    min-height:100vh;
+  }
+  .wrap{
+    max-width:1180px;
+    margin:0 auto;
+    padding:28px 20px 60px;
+  }
+  header{
+    margin-bottom:22px;
+  }
+  header h1{
+    font-size:1.5rem;
+    margin:0 0 4px;
+    letter-spacing:-0.01em;
+    font-weight:700;
+  }
+  header p{
+    margin:0;
+    color:var(--ink-soft);
+    font-size:0.92rem;
+  }
+  .layout{
+    display:grid;
+    grid-template-columns: 320px 1fr;
+    gap:22px;
+    align-items:start;
+  }
+  @media (max-width: 860px){
+    .layout{grid-template-columns: 1fr;}
+  }
+  .panel{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:20px;
+  }
+  .panel + .panel{margin-top:16px;}
+  .section-title{
+    font-size:0.78rem;
+    font-weight:700;
+    color:var(--accent);
+    margin:0 0 12px;
+  }
+  .upload-row{
+    display:flex;
+    gap:10px;
+    margin-bottom:4px;
+  }
+  .upload-box{
+    flex:1;
+    border:1.5px dashed var(--line);
+    border-radius:8px;
+    padding:14px 8px;
+    text-align:center;
+    cursor:pointer;
+    background:#FAFBFA;
+    transition:border-color .15s ease, background .15s ease;
+    position:relative;
+    overflow:hidden;
+  }
+  .upload-box:hover{border-color:var(--accent);}
+  .upload-box.filled{border-style:solid; border-color:var(--accent); cursor:default;}
+  .upload-box input{
+    position:absolute; inset:0; opacity:0; cursor:pointer;
+  }
+  .upload-box .lbl{
+    font-size:0.78rem;
+    font-weight:600;
+    color:var(--ink);
+    display:block;
+  }
+  .upload-box .sub{
+    font-size:0.68rem;
+    color:var(--ink-soft);
+    display:block;
+    margin-top:2px;
+  }
+  .upload-box img.thumb{
+    width:100%;
+    height:56px;
+    object-fit:contain;
+    margin-bottom:6px;
+    border-radius:4px;
+    background:#fff;
+  }
+  .recrop-btn{
+    display:inline-block;
+    margin-top:6px;
+    font-size:0.68rem;
+    font-weight:700;
+    color:var(--accent);
+    background:var(--accent-soft);
+    border:none;
+    border-radius:5px;
+    padding:4px 8px;
+    cursor:pointer;
+    position:relative;
+    z-index:2;
+  }
+  fieldset{
+    border:none;
+    padding:0;
+    margin:0 0 18px;
+  }
+  .toggle-row{
+    display:flex;
+    gap:8px;
+  }
+  .toggle-btn{
+    flex:1;
+    padding:9px 6px;
+    border-radius:7px;
+    border:1px solid var(--line);
+    background:#FAFBFA;
+    font-size:0.8rem;
+    font-weight:600;
+    color:var(--ink-soft);
+    cursor:pointer;
+  }
+  .toggle-btn.active{
+    background:var(--accent);
+    border-color:var(--accent);
+    color:#fff;
+  }
+  .slider-block{margin-bottom:16px;}
+  .slider-label{
+    display:flex;
+    justify-content:space-between;
+    font-size:0.8rem;
+    margin-bottom:6px;
+    color:var(--ink);
+  }
+  .slider-label span.val{
+    color:var(--accent);
+    font-weight:700;
+  }
+  input[type="range"]{
+    width:100%;
+    accent-color:var(--accent);
+  }
+  .limit-note{
+    font-size:0.68rem;
+    color:var(--ink-soft);
+    margin:-10px 0 16px;
+  }
+  .checkbox-row{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    font-size:0.82rem;
+    color:var(--ink);
+    margin-bottom:16px;
+  }
+  .checkbox-row input{accent-color:var(--accent);}
+  .btn{
+    width:100%;
+    padding:11px;
+    border-radius:8px;
+    border:none;
+    font-weight:700;
+    font-size:0.86rem;
+    cursor:pointer;
+    margin-top:8px;
+  }
+  .btn-primary{
+    background:var(--accent);
+    color:#fff;
+  }
+  .btn-outline{
+    background:#fff;
+    border:1.5px solid var(--accent);
+    color:var(--accent);
+  }
+  .btn:disabled{
+    opacity:0.45;
+    cursor:not-allowed;
+  }
+  .hint{
+    font-size:0.72rem;
+    color:var(--ink-soft);
+    margin-top:10px;
+    line-height:1.5;
+  }
+  /* Preview area */
+  .preview-shell{
+    display:flex;
+    justify-content:center;
+    padding:24px;
+    background:repeating-linear-gradient(45deg, #E3E6E1, #E3E6E1 10px, #DCE0DA 10px, #DCE0DA 20px);
+    border-radius:10px;
+    border:1px solid var(--line);
+    overflow:auto;
+  }
+  #a4sheet{
+    background:var(--paper);
+    width:400px;
+    height:565.6px;
+    position:relative;
+    box-shadow:0 4px 18px rgba(0,0,0,0.18);
+    border:1px solid var(--paper-edge);
+    flex-shrink:0;
+  }
+  .card-img{
+    position:absolute;
+    object-fit:contain;
+    background:#fff;
+  }
+  .card-img.empty-slot{
+    border:1.5px dashed #C4CAC3;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:0.62rem;
+    color:#A6ACA4;
+    text-align:center;
+    padding:4px;
+  }
+  .status-msg{
+    font-size:0.78rem;
+    color:var(--accent);
+    margin-top:10px;
+    display:none;
+  }
+  .status-msg.show{display:block;}
+
+  /* Crop modal */
+  .crop-modal{
+    position:fixed;
+    inset:0;
+    background:rgba(20,24,20,0.72);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    z-index:1000;
+    padding:16px;
+  }
+  .crop-modal.show{display:flex;}
+  .crop-modal-inner{
+    background:#fff;
+    border-radius:10px;
+    padding:18px;
+    width:100%;
+    max-width:520px;
+    max-height:92vh;
+    display:flex;
+    flex-direction:column;
+  }
+  .crop-title{
+    font-size:0.85rem;
+    font-weight:700;
+    margin:0 0 12px;
+    color:var(--ink);
+  }
+  .crop-img-wrap{
+    max-height:56vh;
+    overflow:hidden;
+    background:#111;
+    border-radius:6px;
+  }
+  .crop-img-wrap img{
+    display:block;
+    max-width:100%;
+  }
+  .crop-actions{
+    display:flex;
+    gap:10px;
+    margin-top:14px;
+  }
+  .crop-actions .btn{margin-top:0;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>ID Card → A4 Layout</h1>
+    <p>Front aur back photo upload karo, crop karke sirf card wala hissa rakho, layout choose karo — phir print-ready A4 file download karo.</p>
+  </header>
+
+  <div class="layout">
+    <div class="controls">
+
+      <div class="panel">
+        <p class="section-title">1. Photo Upload &amp; Crop</p>
+        <div class="upload-row">
+          <label class="upload-box" id="frontBox">
+            <input type="file" accept="image/*" id="frontInput">
+            <span class="lbl">Front</span>
+            <span class="sub">Tap to upload</span>
+          </label>
+          <label class="upload-box" id="backBox">
+            <input type="file" accept="image/*" id="backInput">
+            <span class="lbl">Back</span>
+            <span class="sub">Tap to upload</span>
+          </label>
+        </div>
+        <p class="hint" style="margin-top:8px;">Upload karte hi crop screen khulega — usme sirf ID card wala hissa select karo, baaki background apne aap kat jayega.</p>
+      </div>
+
+      <div class="panel">
+        <p class="section-title">2. Layout Chuno</p>
+        <fieldset>
+          <div class="toggle-row">
+            <button class="toggle-btn active" data-layout="side">Side by Side</button>
+            <button class="toggle-btn" data-layout="stack">Upar - Niche</button>
+          </div>
+        </fieldset>
+
+        <p class="section-title">3. Size Set Karo</p>
+        <div class="slider-block">
+          <div class="slider-label"><span>Card Width</span><span class="val" id="widthVal">85 mm</span></div>
+          <input type="range" id="widthSlider" min="40" max="130" value="85">
+        </div>
+        <div class="slider-block">
+          <div class="slider-label"><span>Gap Between Cards</span><span class="val" id="gapVal">8 mm</span></div>
+          <input type="range" id="gapSlider" min="0" max="40" value="8">
+        </div>
+        <p class="limit-note" id="limitNote">Size A4 page ke andar fit hote hi automatically limit ho jayega.</p>
+      </div>
+
+      <div class="panel">
+        <p class="section-title">4. Download</p>
+        <button class="btn btn-primary" id="downloadImg" disabled>Image Download (High Quality PNG)</button>
+        <button class="btn btn-outline" id="downloadPdf" disabled>PDF Download</button>
+        <p class="hint">Pehle dono photo upload/crop karo, tab download enable hoga. Original photo quality maintain rahegi, koi compression nahi hoga.</p>
+        <p class="status-msg" id="statusMsg"></p>
+      </div>
+
+    </div>
+
+    <div class="preview-panel">
+      <div class="panel" style="padding:0; overflow:hidden;">
+        <div class="preview-shell">
+          <div id="a4sheet"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Crop Modal -->
+<div class="crop-modal" id="cropModal">
+  <div class="crop-modal-inner">
+    <p class="crop-title">Sirf ID card wala hissa select karo, baaki crop ho jayega</p>
+    <div class="crop-img-wrap">
+      <img id="cropperImage" src="">
+    </div>
+    <div class="crop-actions">
+      <button class="btn btn-outline" id="cropCancel">Cancel</button>
+      <button class="btn btn-primary" id="cropConfirm">Crop &amp; Save</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js"></script>
+<script>
+(function(){
+  const sheet = document.getElementById('a4sheet');
+  const PREVIEW_W = 400; // px, represents 210mm
+  const PREVIEW_H = 565.6; // px, represents 297mm
+  const MM_PER_PX = 210 / PREVIEW_W;
+  const RATIO = 54 / 85.6; // height/width of standard ID card
+  const PAGE_W_MM = 210, PAGE_H_MM = 297, MARGIN_MM = 4;
+  const USABLE_W = PAGE_W_MM - 2*MARGIN_MM;
+  const USABLE_H = PAGE_H_MM - 2*MARGIN_MM;
+
+  let frontSrc = null, backSrc = null;       // cropped, final images used in layout
+  let frontOriginal = null, backOriginal = null; // uncropped uploads, kept for re-crop
+  let layout = 'side';
+  let widthMM = 85;
+  let gapMM = 8;
+  let cropper = null;
+  let pendingWhich = null;
+
+  const frontBox = document.getElementById('frontBox');
+  const backBox = document.getElementById('backBox');
+  const widthSlider = document.getElementById('widthSlider');
+  const gapSlider = document.getElementById('gapSlider');
+  const widthVal = document.getElementById('widthVal');
+  const gapVal = document.getElementById('gapVal');
+
+  function wireUploadInput(input, which){
+    input.addEventListener('change', (e)=>{
+      const file = e.target.files[0];
+      if(!file) return;
+      const reader = new FileReader();
+      reader.onload = (ev)=>{
+        if(which==='front') frontOriginal = ev.target.result;
+        else backOriginal = ev.target.result;
+        openCropModal(ev.target.result, which);
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+  wireUploadInput(document.getElementById('frontInput'), 'front');
+  wireUploadInput(document.getElementById('backInput'), 'back');
+
+  function rebuildBox(box, which, dataUrl){
+    box.classList.add('filled');
+    box.innerHTML = '';
+    const img = document.createElement('img');
+    img.src = dataUrl;
+    img.className = 'thumb';
+    box.appendChild(img);
+    const lbl = document.createElement('span');
+    lbl.className = 'lbl';
+    lbl.textContent = (which==='front' ? 'Front ✓' : 'Back ✓');
+    box.appendChild(lbl);
+    const recrop = document.createElement('button');
+    recrop.type = 'button';
+    recrop.className = 'recrop-btn';
+    recrop.textContent = 'Recrop';
+    recrop.addEventListener('click', (ev)=>{
+      ev.preventDefault();
+      ev.stopPropagation();
+      const original = which==='front' ? frontOriginal : backOriginal;
+      openCropModal(original, which);
+    });
+    box.appendChild(recrop);
+    // also allow uploading a fresh photo again
+    const freshInput = document.createElement('input');
+    freshInput.type = 'file';
+    freshInput.accept = 'image/*';
+    freshInput.style.position='absolute';
+    freshInput.style.inset='0';
+    freshInput.style.opacity='0';
+    freshInput.style.cursor='pointer';
+    freshInput.style.zIndex='1';
+    wireUploadInput(freshInput, which);
+    box.appendChild(freshInput);
+  }
+
+  // ---- Crop modal logic ----
+  const cropModal = document.getElementById('cropModal');
+  const cropperImage = document.getElementById('cropperImage');
+
+  function openCropModal(dataUrl, which){
+    pendingWhich = which;
+    cropperImage.src = dataUrl;
+    cropModal.classList.add('show');
+    cropperImage.onload = function(){
+      if(cropper){ cropper.destroy(); cropper = null; }
+      cropper = new Cropper(cropperImage, {
+        aspectRatio: 85.6/54,
+        viewMode: 1,
+        autoCropArea: 0.9,
+        background: false,
+        responsive: true,
+        checkOrientation: true
+      });
+    };
+  }
+
+  function closeCropModal(){
+    cropModal.classList.remove('show');
+    if(cropper){ cropper.destroy(); cropper = null; }
+  }
+
+  document.getElementById('cropCancel').addEventListener('click', ()=>{
+    closeCropModal();
+  });
+
+  document.getElementById('cropConfirm').addEventListener('click', ()=>{
+    if(!cropper) return;
+    // getCroppedCanvas without forcing width/height keeps native resolution -> no quality loss
+    const canvas = cropper.getCroppedCanvas({ imageSmoothingQuality: 'high' });
+    const dataUrl = canvas.toDataURL('image/png'); // lossless
+    if(pendingWhich === 'front'){
+      frontSrc = dataUrl;
+      rebuildBox(frontBox, 'front', dataUrl);
+    } else {
+      backSrc = dataUrl;
+      rebuildBox(backBox, 'back', dataUrl);
+    }
+    closeCropModal();
+    clampAndRender();
+    updateButtons();
+  });
+
+  // ---- Layout toggle ----
+  document.querySelectorAll('.toggle-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      document.querySelectorAll('.toggle-btn').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      layout = btn.dataset.layout;
+      clampAndRender();
+    });
+  });
+
+  widthSlider.addEventListener('input', ()=>{
+    widthMM = parseInt(widthSlider.value);
+    clampAndRender();
+  });
+  gapSlider.addEventListener('input', ()=>{
+    gapMM = parseInt(gapSlider.value);
+    clampAndRender();
+  });
+
+  function mmToPx(mm){ return mm / MM_PER_PX; }
+
+  // Keeps card size + gap inside the printable A4 area, whichever layout is active
+  function clampAndRender(){
+    let maxW;
+    if(layout === 'side'){
+      maxW = Math.floor((USABLE_W - gapMM) / 2);
+    } else {
+      maxW = Math.min(USABLE_W, Math.floor(USABLE_H / (2*RATIO) - (gapMM/(2*RATIO))));
+    }
+    maxW = Math.max(40, Math.min(130, maxW));
+    widthSlider.max = maxW;
+    if(widthMM > maxW){ widthMM = maxW; widthSlider.value = maxW; }
+
+    let maxGap;
+    if(layout === 'side'){
+      maxGap = Math.floor(USABLE_W - (widthMM*2));
+    } else {
+      maxGap = Math.floor(USABLE_H - (widthMM*RATIO*2));
+    }
+    maxGap = Math.max(0, Math.min(40, maxGap));
+    gapSlider.max = maxGap;
+    if(gapMM > maxGap){ gapMM = maxGap; gapSlider.value = maxGap; }
+
+    widthVal.textContent = widthMM + ' mm';
+    gapVal.textContent = gapMM + ' mm';
+
+    renderPreview();
+  }
+
+  function renderPreview(){
+    sheet.innerHTML = '';
+    const cardWpx = mmToPx(widthMM);
+    const cardHpx = cardWpx * RATIO;
+    const gapPx = mmToPx(gapMM);
+
+    let totalW, totalH;
+    if(layout === 'side'){
+      totalW = cardWpx*2 + gapPx;
+      totalH = cardHpx;
+    } else {
+      totalW = cardWpx;
+      totalH = cardHpx*2 + gapPx;
+    }
+
+    const startX = (PREVIEW_W - totalW)/2;
+    const startY = (PREVIEW_H - totalH)/2;
+
+    function makeSlot(src, x, y, w, h, label){
+      const el = document.createElement(src ? 'img' : 'div');
+      el.className = 'card-img' + (src ? '' : ' empty-slot');
+      el.style.left = x+'px';
+      el.style.top = y+'px';
+      el.style.width = w+'px';
+      el.style.height = h+'px';
+      if(src) el.src = src;
+      else el.textContent = label;
+      sheet.appendChild(el);
+    }
+
+    if(layout==='side'){
+      makeSlot(frontSrc, startX, startY, cardWpx, cardHpx, 'Front');
+      makeSlot(backSrc, startX+cardWpx+gapPx, startY, cardWpx, cardHpx, 'Back');
+    } else {
+      makeSlot(frontSrc, startX, startY, cardWpx, cardHpx, 'Front');
+      makeSlot(backSrc, startX, startY+cardHpx+gapPx, cardWpx, cardHpx, 'Back');
+    }
+  }
+  clampAndRender();
+
+  function updateButtons(){
+    const ready = frontSrc && backSrc;
+    document.getElementById('downloadImg').disabled = !ready;
+    document.getElementById('downloadPdf').disabled = !ready;
+  }
+
+  function showStatus(msg){
+    const s = document.getElementById('statusMsg');
+    s.textContent = msg;
+    s.classList.add('show');
+    setTimeout(()=>{ s.classList.remove('show'); }, 3500);
+  }
+
+  // Render the A4 sheet at true print resolution (300 DPI) so quality never degrades
+  async function renderHighResCanvas(){
+    const dpiScale = (300 / 25.4) / (PREVIEW_W / PAGE_W_MM); // scale factor to reach 300 DPI
+    return await html2canvas(sheet, {
+      scale: dpiScale,
+      backgroundColor: '#ffffff',
+      useCORS: true,
+      imageTimeout: 0
+    });
+  }
+
+  document.getElementById('downloadImg').addEventListener('click', async ()=>{
+    showStatus('Taiyaar ho raha hai...');
+    const canvas = await renderHighResCanvas();
+    const link = document.createElement('a');
+    link.download = 'id-card-a4.png';
+    link.href = canvas.toDataURL('image/png'); // lossless, no compression artifacts
+    link.click();
+    showStatus('Image download ho gayi — original quality maintained.');
+  });
+
+  document.getElementById('downloadPdf').addEventListener('click', async ()=>{
+    showStatus('PDF taiyaar ho raha hai...');
+    const canvas = await renderHighResCanvas();
+    const imgData = canvas.toDataURL('image/png');
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF({unit:'mm', format:'a4', compress:false});
+    pdf.addImage(imgData, 'PNG', 0, 0, 210, 297);
+    pdf.save('id-card-a4.pdf');
+    showStatus('PDF download ho gayi.');
+  });
+
+})();
+</script>
+</body>
+</html>
