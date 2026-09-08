@@ -278,7 +278,8 @@
     color:var(--ink);
   }
   .crop-img-wrap{
-    max-height:56vh;
+    height:58vh;
+    max-height:480px;
     overflow:hidden;
     background:#111;
     border-radius:6px;
@@ -286,6 +287,7 @@
   .crop-img-wrap img{
     display:block;
     max-width:100%;
+    max-height:100%;
   }
   .crop-actions{
     display:flex;
@@ -345,9 +347,9 @@
 
       <div class="panel">
         <p class="section-title">4. Download</p>
-        <button class="btn btn-primary" id="downloadImg" disabled>Image Download (High Quality PNG)</button>
+        <button class="btn btn-primary" id="downloadImg" disabled>Image Download (High Quality JPG)</button>
         <button class="btn btn-outline" id="downloadPdf" disabled>PDF Download</button>
-        <p class="hint">Pehle dono photo upload/crop karo, tab download enable hoga. Original photo quality maintain rahegi, koi compression nahi hoga.</p>
+        <p class="hint">Pehle dono photo upload/crop karo, tab download enable hoga. File size normal rahega, quality print ke liye poori tarah sharp hogi.</p>
         <p class="status-msg" id="statusMsg"></p>
       </div>
 
@@ -463,17 +465,31 @@
 
   function openCropModal(dataUrl, which){
     pendingWhich = which;
-    cropperImage.src = dataUrl;
+    // destroy any previous instance BEFORE touching the image src, so the
+    // old injected canvas/wrapper never overlaps with the new one
+    if(cropper){ cropper.destroy(); cropper = null; }
     cropModal.classList.add('show');
+    cropperImage.removeAttribute('style');
+    cropperImage.src = dataUrl;
     cropperImage.onload = function(){
-      if(cropper){ cropper.destroy(); cropper = null; }
-      cropper = new Cropper(cropperImage, {
-        aspectRatio: 85.6/54,
-        viewMode: 1,
-        autoCropArea: 0.9,
-        background: false,
-        responsive: true,
-        checkOrientation: true
+      // wait two frames so the modal has finished laying out at full size
+      // before Cropper measures the container — this is what was causing
+      // the crop box to glitch/jump on open
+      requestAnimationFrame(function(){
+        requestAnimationFrame(function(){
+          cropper = new Cropper(cropperImage, {
+            aspectRatio: 85.6/54,
+            viewMode: 1,
+            autoCropArea: 0.9,
+            background: false,
+            checkOrientation: true,
+            movable: true,
+            zoomable: true,
+            scalable: false,
+            rotatable: false,
+            guides: true
+          });
+        });
       });
     };
   }
@@ -491,7 +507,10 @@
     if(!cropper) return;
     // getCroppedCanvas without forcing width/height keeps native resolution -> no quality loss
     const canvas = cropper.getCroppedCanvas({ imageSmoothingQuality: 'high' });
-    const dataUrl = canvas.toDataURL('image/png'); // lossless
+    // JPEG at 0.95 is visually indistinguishable from the original photo but
+    // keeps file size sane — PNG on real photos barely compresses at all
+    // and was inflating every file to tens of MB
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
     if(pendingWhich === 'front'){
       frontSrc = dataUrl;
       rebuildBox(frontBox, 'front', dataUrl);
@@ -617,23 +636,26 @@
     });
   }
 
+  // JPEG at high quality (0.95) keeps the print crisp while matching normal
+  // photo file sizes — PNG was re-encoding every pixel losslessly, which
+  // blows up to tens of MB on real photos with natural noise/detail.
   document.getElementById('downloadImg').addEventListener('click', async ()=>{
     showStatus('Taiyaar ho raha hai...');
     const canvas = await renderHighResCanvas();
     const link = document.createElement('a');
-    link.download = 'id-card-a4.png';
-    link.href = canvas.toDataURL('image/png'); // lossless, no compression artifacts
+    link.download = 'id-card-a4.jpg';
+    link.href = canvas.toDataURL('image/jpeg', 0.95);
     link.click();
-    showStatus('Image download ho gayi — original quality maintained.');
+    showStatus('Image download ho gayi.');
   });
 
   document.getElementById('downloadPdf').addEventListener('click', async ()=>{
     showStatus('PDF taiyaar ho raha hai...');
     const canvas = await renderHighResCanvas();
-    const imgData = canvas.toDataURL('image/png');
+    const imgData = canvas.toDataURL('image/jpeg', 0.95);
     const { jsPDF } = window.jspdf;
-    const pdf = new jsPDF({unit:'mm', format:'a4', compress:false});
-    pdf.addImage(imgData, 'PNG', 0, 0, 210, 297);
+    const pdf = new jsPDF({unit:'mm', format:'a4', compress:true});
+    pdf.addImage(imgData, 'JPEG', 0, 0, 210, 297);
     pdf.save('id-card-a4.pdf');
     showStatus('PDF download ho gayi.');
   });
