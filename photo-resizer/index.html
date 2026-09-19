@@ -1,22 +1,113 @@
 <!DOCTYPE html>
 <html lang="hi">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PDF Banao — Coming Soon</title>
-<style>
-  body{font-family:'Segoe UI',sans-serif;background:#EDEFEC;color:#1B211D;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;text-align:center;padding:20px;}
-  .box{background:#fff;border:1px solid #D8DCD6;border-radius:12px;padding:36px 28px;max-width:400px;}
-  h1{font-size:1.2rem;margin:0 0 8px;}
-  p{color:#5B655E;font-size:0.88rem;margin:0 0 20px;}
-  a{display:inline-block;background:#2B5D48;color:#fff;text-decoration:none;padding:10px 18px;border-radius:8px;font-weight:700;font-size:0.85rem;}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Coming Soon</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+      /* बहते हुए मल्टी-कलर बैकग्राउंड का ग्रेडिएंट */
+      background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab, #8a2be2);
+      background-size: 400% 400%;
+      animation: gradientFlow 10s ease infinite;
+    }
+
+    /* बैकग्राउंड कलर्स का फ्लो (Animation) */
+    @keyframes gradientFlow {
+      0% {
+        background-position: 0% 50%;
+      }
+      50% {
+        background-position: 100% 50%;
+      }
+      100% {
+        background-position: 0% 50%;
+      }
+    }
+
+    /* बीच का लिक्विड ग्लास बॉक्स (Liquid Glass Box) */
+    .glass-box {
+      position: relative;
+      padding: 50px 80px;
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 25px;
+      backdrop-filter: blur(15px);
+      -webkit-backdrop-filter: blur(15px);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.25),
+                  inset 0 0 15px rgba(255, 255, 255, 0.2);
+      text-align: center;
+      overflow: hidden;
+    }
+
+    /* लिक्विड ग्लास पर शाइन/रिफ्लेक्शन इफेक्ट */
+    .glass-box::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: linear-gradient(
+        45deg,
+        transparent,
+        rgba(255, 255, 255, 0.13),
+        transparent
+      );
+      transform: rotate(45deg);
+      animation: glassShine 6s infinite;
+    }
+
+    @keyframes glassShine {
+      0% {
+        transform: translateY(-100%) rotate(45deg);
+      }
+      100% {
+        transform: translateY(100%) rotate(45deg);
+      }
+    }
+
+    /* "Coming Soon" लिखा हुआ टेक्स्ट */
+    .glass-box h1 {
+      color: #ffffff;
+      font-size: 3.5rem;
+      font-weight: 800;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      text-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    /* मोबाइल स्क्रीन के लिए रेस्पॉन्सिव */
+    @media (max-width: 600px) {
+      .glass-box {
+        padding: 35px 40px;
+        width: 85%;
+      }
+      .glass-box h1 {
+        font-size: 2rem;
+        letter-spacing: 2px;
+      }
+    }
+  </style>
 </head>
 <body>
-  <div class="box">
-    <h1>📄 PDF Banao</h1>
-    <p>Ye tool jald hi taiyaar hoga.</p>
-    <a href="/">🏠 Home Wapas Jao</a>
+
+  <!-- बीच में लिक्विड ग्लास बॉक्स -->
+  <div class="glass-box">
+    <h1>Coming Soon</h1>
   </div>
+
 </body>
 </html>
