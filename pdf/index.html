@@ -1,404 +1,113 @@
 <!DOCTYPE html>
 <html lang="hi">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PDF Banao</title>
-<style>
-  :root{
-    --bg: #EDEFEC;
-    --panel: #FFFFFF;
-    --ink: #1B211D;
-    --ink-soft: #5B655E;
-    --line: #D8DCD6;
-    --accent: #2B5D48;
-    --accent-soft: #E4EEE8;
-    --danger: #A6432E;
-    --danger-soft: #F5E4E1;
-  }
-  *{box-sizing:border-box;}
-  html,body{margin:0;padding:0;}
-  body{
-    background:var(--bg);
-    color:var(--ink);
-    font-family: 'Segoe UI', 'Noto Sans Devanagari', system-ui, -apple-system, sans-serif;
-    min-height:100vh;
-  }
-  .wrap{
-    max-width:1100px;
-    margin:0 auto;
-    padding:28px 20px 60px;
-  }
-  header{
-    margin-bottom:22px;
-  }
-  .home-link{
-    display:inline-block;
-    text-decoration:none;
-    font-size:0.78rem;
-    font-weight:700;
-    color:var(--accent);
-    background:var(--accent-soft);
-    padding:6px 12px;
-    border-radius:6px;
-    margin-bottom:12px;
-  }
-  header h1{
-    font-size:1.5rem;
-    margin:0 0 4px;
-    letter-spacing:-0.01em;
-    font-weight:700;
-  }
-  header p{
-    margin:0;
-    color:var(--ink-soft);
-    font-size:0.92rem;
-  }
-  .layout{
-    display:grid;
-    grid-template-columns: 320px 1fr;
-    gap:22px;
-    align-items:start;
-  }
-  @media (max-width: 860px){
-    .layout{grid-template-columns: 1fr;}
-  }
-  .panel{
-    background:var(--panel);
-    border:1px solid var(--line);
-    border-radius:10px;
-    padding:20px;
-  }
-  .panel + .panel{margin-top:16px;}
-  .section-title{
-    font-size:0.78rem;
-    font-weight:700;
-    color:var(--accent);
-    margin:0 0 12px;
-  }
-  .upload-box{
-    border:1.5px dashed var(--line);
-    border-radius:8px;
-    padding:22px 10px;
-    text-align:center;
-    cursor:pointer;
-    background:#FAFBFA;
-    position:relative;
-    overflow:hidden;
-    transition:border-color .15s ease;
-  }
-  .upload-box:hover{border-color:var(--accent);}
-  .upload-box input{
-    position:absolute; inset:0; opacity:0; cursor:pointer;
-  }
-  .upload-box .icon{font-size:1.6rem; display:block; margin-bottom:6px;}
-  .upload-box .lbl{font-size:0.82rem; font-weight:600;}
-  .upload-box .sub{font-size:0.7rem; color:var(--ink-soft); display:block; margin-top:2px;}
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Coming Soon</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
 
-  .slider-block{margin:16px 0;}
-  .slider-label{
-    display:flex;
-    justify-content:space-between;
-    font-size:0.8rem;
-    margin-bottom:6px;
-    color:var(--ink);
-  }
-  .slider-label span.val{color:var(--accent); font-weight:700;}
-  input[type="range"]{width:100%; accent-color:var(--accent);}
+    body {
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+      /* बहते हुए मल्टी-कलर बैकग्राउंड का ग्रेडिएंट */
+      background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab, #8a2be2);
+      background-size: 400% 400%;
+      animation: gradientFlow 10s ease infinite;
+    }
 
-  .btn{
-    width:100%;
-    padding:11px;
-    border-radius:8px;
-    border:none;
-    font-weight:700;
-    font-size:0.86rem;
-    cursor:pointer;
-    margin-top:8px;
-  }
-  .btn-primary{background:var(--accent); color:#fff;}
-  .btn-outline{background:#fff; border:1.5px solid var(--accent); color:var(--accent);}
-  .btn:disabled{opacity:0.45; cursor:not-allowed;}
-  .hint{
-    font-size:0.72rem;
-    color:var(--ink-soft);
-    margin-top:10px;
-    line-height:1.5;
-  }
-  .status-msg{
-    font-size:0.78rem;
-    color:var(--accent);
-    margin-top:10px;
-    display:none;
-  }
-  .status-msg.show{display:block;}
+    /* बैकग्राउंड कलर्स का फ्लो (Animation) */
+    @keyframes gradientFlow {
+      0% {
+        background-position: 0% 50%;
+      }
+      50% {
+        background-position: 100% 50%;
+      }
+      100% {
+        background-position: 0% 50%;
+      }
+    }
 
-  .page-list{
-    display:flex;
-    flex-direction:column;
-    gap:10px;
-  }
-  .empty-note{
-    text-align:center;
-    color:var(--ink-soft);
-    font-size:0.85rem;
-    padding:60px 20px;
-  }
-  .page-item{
-    display:flex;
-    align-items:center;
-    gap:12px;
-    border:1px solid var(--line);
-    border-radius:8px;
-    padding:10px;
-    background:#FAFBFA;
-  }
-  .page-item .num{
-    flex-shrink:0;
-    width:26px;
-    height:26px;
-    border-radius:50%;
-    background:var(--accent);
-    color:#fff;
-    font-size:0.72rem;
-    font-weight:700;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-  }
-  .page-item img{
-    width:56px;
-    height:72px;
-    object-fit:cover;
-    border-radius:5px;
-    background:#fff;
-    border:1px solid var(--line);
-    flex-shrink:0;
-  }
-  .page-item .name{
-    flex:1;
-    min-width:0;
-    font-size:0.8rem;
-    overflow:hidden;
-    text-overflow:ellipsis;
-    white-space:nowrap;
-  }
-  .page-item .actions{
-    display:flex;
-    gap:6px;
-    flex-shrink:0;
-  }
-  .icon-btn{
-    width:30px;
-    height:30px;
-    border-radius:6px;
-    border:1px solid var(--line);
-    background:#fff;
-    cursor:pointer;
-    font-size:0.85rem;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-  }
-  .icon-btn:hover{border-color:var(--accent);}
-  .icon-btn.danger{color:var(--danger); border-color:var(--danger-soft);}
-  .icon-btn:disabled{opacity:0.3; cursor:not-allowed;}
-</style>
+    /* बीच का लिक्विड ग्लास बॉक्स (Liquid Glass Box) */
+    .glass-box {
+      position: relative;
+      padding: 50px 80px;
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 25px;
+      backdrop-filter: blur(15px);
+      -webkit-backdrop-filter: blur(15px);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.25),
+                  inset 0 0 15px rgba(255, 255, 255, 0.2);
+      text-align: center;
+      overflow: hidden;
+    }
+
+    /* लिक्विड ग्लास पर शाइन/रिफ्लेक्शन इफेक्ट */
+    .glass-box::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: linear-gradient(
+        45deg,
+        transparent,
+        rgba(255, 255, 255, 0.13),
+        transparent
+      );
+      transform: rotate(45deg);
+      animation: glassShine 6s infinite;
+    }
+
+    @keyframes glassShine {
+      0% {
+        transform: translateY(-100%) rotate(45deg);
+      }
+      100% {
+        transform: translateY(100%) rotate(45deg);
+      }
+    }
+
+    /* "Coming Soon" लिखा हुआ टेक्स्ट */
+    .glass-box h1 {
+      color: #ffffff;
+      font-size: 3.5rem;
+      font-weight: 800;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      text-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    /* मोबाइल स्क्रीन के लिए रेस्पॉन्सिव */
+    @media (max-width: 600px) {
+      .glass-box {
+        padding: 35px 40px;
+        width: 85%;
+      }
+      .glass-box h1 {
+        font-size: 2rem;
+        letter-spacing: 2px;
+      }
+    }
+  </style>
 </head>
 <body>
-<div class="wrap">
-  <header>
-    <a href="/" class="home-link">🏠 Home</a>
-    <h1>PDF Banao</h1>
-    <p>Ek ya zyada photo/image upload karo, order set karo — sab ek PDF file mein ban jayega, original quality ke saath.</p>
-  </header>
 
-  <div class="layout">
-    <div class="controls">
-
-      <div class="panel">
-        <p class="section-title">1. Photo Upload Karo</p>
-        <label class="upload-box">
-          <input type="file" accept="image/*" id="fileInput" multiple>
-          <span class="icon">📥</span>
-          <span class="lbl">Photo Chuno</span>
-          <span class="sub">Ek saath multiple photo select kar sakte ho</span>
-        </label>
-        <p class="hint">Har photo PDF mein ek alag page banega, jitni upload karoge utne page.</p>
-      </div>
-
-      <div class="panel">
-        <p class="section-title">2. Page Margin</p>
-        <div class="slider-block">
-          <div class="slider-label"><span>Page Border/Margin</span><span class="val" id="marginVal">10 mm</span></div>
-          <input type="range" id="marginSlider" min="0" max="25" value="10">
-        </div>
-        <p class="hint">Photo A4 page ke andar isi margin ke hisaab se center hoke fit hogi, aspect ratio bigdega nahi.</p>
-      </div>
-
-      <div class="panel">
-        <p class="section-title">3. Download</p>
-        <button class="btn btn-primary" id="downloadBtn" disabled>PDF Download Karo</button>
-        <p class="hint">Original photo jaisi hai waisi hi quality mein PDF ke andar jayegi — koi extra compression nahi hoga.</p>
-        <p class="status-msg" id="statusMsg"></p>
-      </div>
-
-    </div>
-
-    <div class="preview-panel">
-      <div class="panel">
-        <p class="section-title" id="pageListTitle">Pages (0)</p>
-        <div class="page-list" id="pageList">
-          <p class="empty-note">Abhi tak koi photo upload nahi hui — upar se photo chuno.</p>
-        </div>
-      </div>
-    </div>
+  <!-- बीच में लिक्विड ग्लास बॉक्स -->
+  <div class="glass-box">
+    <h1>Coming Soon</h1>
   </div>
-</div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script>
-(function(){
-  const fileInput = document.getElementById('fileInput');
-  const pageList = document.getElementById('pageList');
-  const pageListTitle = document.getElementById('pageListTitle');
-  const downloadBtn = document.getElementById('downloadBtn');
-  const marginSlider = document.getElementById('marginSlider');
-  const marginVal = document.getElementById('marginVal');
-
-  let images = []; // { id, name, dataUrl }
-  let counter = 0;
-  let marginMM = 10;
-
-  marginSlider.addEventListener('input', ()=>{
-    marginMM = parseInt(marginSlider.value);
-    marginVal.textContent = marginMM + ' mm';
-  });
-
-  fileInput.addEventListener('change', (e)=>{
-    const files = Array.from(e.target.files || []);
-    files.forEach(file=>{
-      const reader = new FileReader();
-      reader.onload = (ev)=>{
-        images.push({ id: ++counter, name: file.name, dataUrl: ev.target.result });
-        renderList();
-      };
-      reader.readAsDataURL(file);
-    });
-    fileInput.value = '';
-  });
-
-  function renderList(){
-    pageListTitle.textContent = 'Pages (' + images.length + ')';
-    if(images.length === 0){
-      pageList.innerHTML = '<p class="empty-note">Abhi tak koi photo upload nahi hui — upar se photo chuno.</p>';
-      downloadBtn.disabled = true;
-      return;
-    }
-    downloadBtn.disabled = false;
-    pageList.innerHTML = '';
-    images.forEach((img, idx)=>{
-      const item = document.createElement('div');
-      item.className = 'page-item';
-
-      const num = document.createElement('div');
-      num.className = 'num';
-      num.textContent = idx + 1;
-      item.appendChild(num);
-
-      const thumb = document.createElement('img');
-      thumb.src = img.dataUrl;
-      item.appendChild(thumb);
-
-      const name = document.createElement('div');
-      name.className = 'name';
-      name.textContent = img.name;
-      item.appendChild(name);
-
-      const actions = document.createElement('div');
-      actions.className = 'actions';
-
-      const upBtn = document.createElement('button');
-      upBtn.className = 'icon-btn';
-      upBtn.textContent = '↑';
-      upBtn.disabled = idx === 0;
-      upBtn.addEventListener('click', ()=>{
-        [images[idx-1], images[idx]] = [images[idx], images[idx-1]];
-        renderList();
-      });
-      actions.appendChild(upBtn);
-
-      const downBtn = document.createElement('button');
-      downBtn.className = 'icon-btn';
-      downBtn.textContent = '↓';
-      downBtn.disabled = idx === images.length - 1;
-      downBtn.addEventListener('click', ()=>{
-        [images[idx+1], images[idx]] = [images[idx], images[idx+1]];
-        renderList();
-      });
-      actions.appendChild(downBtn);
-
-      const delBtn = document.createElement('button');
-      delBtn.className = 'icon-btn danger';
-      delBtn.textContent = '✕';
-      delBtn.addEventListener('click', ()=>{
-        images.splice(idx, 1);
-        renderList();
-      });
-      actions.appendChild(delBtn);
-
-      item.appendChild(actions);
-      pageList.appendChild(item);
-    });
-  }
-
-  function showStatus(msg){
-    const s = document.getElementById('statusMsg');
-    s.textContent = msg;
-    s.classList.add('show');
-    setTimeout(()=>{ s.classList.remove('show'); }, 3500);
-  }
-
-  function detectFormat(dataUrl){
-    const match = dataUrl.match(/^data:image\/(\w+);/i);
-    if(!match) return 'JPEG';
-    const ext = match[1].toLowerCase();
-    if(ext === 'png') return 'PNG';
-    if(ext === 'webp') return 'WEBP';
-    return 'JPEG';
-  }
-
-  downloadBtn.addEventListener('click', ()=>{
-    if(images.length === 0) return;
-    showStatus('PDF taiyaar ho raha hai...');
-    const { jsPDF } = window.jspdf;
-    const pdf = new jsPDF({ unit: 'mm', format: 'a4', compress: true });
-    const PAGE_W = 210, PAGE_H = 297;
-    const availW = PAGE_W - marginMM * 2;
-    const availH = PAGE_H - marginMM * 2;
-
-    images.forEach((img, idx)=>{
-      if(idx > 0) pdf.addPage('a4', 'p');
-      const format = detectFormat(img.dataUrl);
-      let props;
-      try{
-        props = pdf.getImageProperties(img.dataUrl);
-      }catch(e){
-        props = { width: 1, height: 1.414 };
-      }
-      const ratio = Math.min(availW / props.width, availH / props.height);
-      const w = props.width * ratio;
-      const h = props.height * ratio;
-      const x = (PAGE_W - w) / 2;
-      const y = (PAGE_H - h) / 2;
-      pdf.addImage(img.dataUrl, format, x, y, w, h);
-    });
-
-    pdf.save('document.pdf');
-    showStatus('PDF download ho gayi.');
-  });
-
-})();
-</script>
 </body>
 </html>
