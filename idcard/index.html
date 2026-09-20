@@ -23,14 +23,17 @@
     --glass-border: rgba(255,255,255,0.14);
   }
   *{box-sizing:border-box;}
-  html,body{margin:0;padding:0;}
+  html,body{margin:0;padding:0; height:100%;}
   body{
     background:#0B0E17;
     color:var(--ink);
     font-family:'Inter', system-ui, -apple-system, sans-serif;
-    min-height:100vh;
-    overflow-x:hidden;
+    height:100%;
+    overflow:hidden;
     position:relative;
+  }
+  @media (max-height:700px), (max-width:860px){
+    html,body{ height:auto; overflow:auto; }
   }
 
   .orb{ position:fixed; border-radius:50%; filter:blur(80px); opacity:0.38; z-index:0; will-change:transform; }
@@ -45,25 +48,40 @@
     position:relative;
     z-index:1;
     max-width:980px;
+    height:100%;
     margin:0 auto;
-    padding:26px 20px 70px;
+    padding:18px 20px;
+    display:flex;
+    flex-direction:column;
+  }
+  @media (max-height:700px), (max-width:860px){
+    .wrap{ height:auto; min-height:100vh; padding:26px 20px 60px; }
   }
 
   .layout{
     display:grid;
     grid-template-columns: 360px 1fr;
     gap:20px;
-    align-items:start;
+    align-items:stretch;
+    flex:1;
+    min-height:0;
   }
   @media (max-width: 860px){
-    .layout{ grid-template-columns: 1fr; }
+    .layout{ grid-template-columns: 1fr; align-items:start; }
   }
-  .right-col{ position:sticky; top:20px; }
+  .left-col{
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    gap:14px;
+    min-height:0;
+  }
+  .right-col{ min-height:0; }
   @media (max-width: 860px){
-    .right-col{ position:static; }
+    .right-col{ min-height:340px; }
   }
 
-  .topbar{ margin-bottom:22px; }
+  .topbar{ display:flex; align-items:center; gap:14px; margin-bottom:16px; flex-shrink:0; }
   .home-pill{
     display:inline-block;
     text-decoration:none;
@@ -76,13 +94,13 @@
     -webkit-backdrop-filter: blur(14px);
     padding:7px 14px;
     border-radius:999px;
+    flex-shrink:0;
   }
   h1.page-title{
-    text-align:center;
-    font-size:1.7rem;
+    font-size:1.3rem;
     font-weight:700;
     letter-spacing:-0.02em;
-    margin:18px 0 26px;
+    margin:0;
   }
 
   /* ---- Upload tiles: shaped like the card itself ---- */
@@ -90,7 +108,7 @@
     display:grid;
     grid-template-columns:1fr 1fr;
     gap:12px;
-    margin-bottom:16px;
+    flex-shrink:0;
   }
   .upload-box{
     position:relative;
@@ -164,8 +182,8 @@
     -webkit-backdrop-filter: blur(22px) saturate(160%);
     border-radius:18px;
     padding:16px;
-    margin-bottom:16px;
     box-shadow: inset 0 1px 0 rgba(255,255,255,0.1);
+    flex-shrink:0;
   }
   fieldset{ border:none; padding:0; margin:0 0 16px; }
   .toggle-row{
@@ -202,19 +220,24 @@
 
   /* ---- Preview ---- */
   .preview-shell{
-    display:flex; justify-content:center;
-    padding:22px;
+    display:flex; align-items:center; justify-content:center;
+    padding:20px;
     background:var(--glass);
     border:1px solid var(--glass-border);
     backdrop-filter: blur(22px) saturate(160%);
     -webkit-backdrop-filter: blur(22px) saturate(160%);
     border-radius:18px;
-    overflow:auto;
-    margin-bottom:16px;
+    height:100%;
+    container-type: size;
+  }
+  @media (max-width: 860px){
+    .preview-shell{ height:340px; }
   }
   #a4sheet{
     background:#fff;
-    width:380px; height:537.1px;
+    aspect-ratio: 210 / 297;
+    height: min(100cqh, calc(100cqw * 297 / 210));
+    width: auto;
     position:relative;
     box-shadow:0 16px 44px rgba(0,0,0,0.55);
     flex-shrink:0;
@@ -227,7 +250,7 @@
   }
 
   /* ---- Download ---- */
-  .download-row{ display:flex; gap:10px; }
+  .download-row{ display:flex; gap:10px; flex-shrink:0; }
   .btn{
     flex:1;
     padding:13px;
@@ -312,8 +335,8 @@
 <div class="wrap">
   <div class="topbar">
     <a href="/" class="home-pill">← Home</a>
+    <h1 class="page-title">ID Card</h1>
   </div>
-  <h1 class="page-title">ID Card</h1>
 
   <div class="layout">
     <div class="left-col">
@@ -384,9 +407,9 @@
 <script>
 (function(){
   const sheet = document.getElementById('a4sheet');
-  const PREVIEW_W = 380; // px, represents 210mm
-  const PREVIEW_H = 537.1; // px, represents 297mm
-  const MM_PER_PX = 210 / PREVIEW_W;
+  // Preview size is read live from the rendered element instead of a fixed
+  // constant, so the sheet can be sized responsively by CSS (to fit the
+  // viewport) and all the mm math still comes out correct.
   const RATIO = 54 / 85.6; // height/width of standard ID card
   const PAGE_W_MM = 210, PAGE_H_MM = 297, MARGIN_MM = 4;
   const USABLE_W = PAGE_W_MM - 2*MARGIN_MM;
@@ -541,7 +564,7 @@
     clampAndRender();
   });
 
-  function mmToPx(mm){ return mm / MM_PER_PX; }
+  function mmToPx(mm, mmPerPx){ return mm / mmPerPx; }
 
   // Keeps card size + gap inside the printable A4 area, whichever layout is active
   function clampAndRender(){
@@ -573,9 +596,11 @@
 
   function renderPreview(){
     sheet.innerHTML = '';
-    const cardWpx = mmToPx(widthMM);
+    const dims = sheet.getBoundingClientRect(); // actual on-screen size, set by CSS
+    const mmPerPx = 210 / dims.width;
+    const cardWpx = mmToPx(widthMM, mmPerPx);
     const cardHpx = cardWpx * RATIO;
-    const gapPx = mmToPx(gapMM);
+    const gapPx = mmToPx(gapMM, mmPerPx);
 
     let totalW, totalH;
     if(layout === 'side'){
@@ -586,8 +611,8 @@
       totalH = cardHpx*2 + gapPx;
     }
 
-    const startX = (PREVIEW_W - totalW)/2;
-    const startY = (PREVIEW_H - totalH)/2;
+    const startX = (dims.width - totalW)/2;
+    const startY = (dims.height - totalH)/2;
 
     function makeSlot(src, x, y, w, h, label){
       const el = document.createElement(src ? 'img' : 'div');
@@ -610,6 +635,7 @@
     }
   }
   clampAndRender();
+  window.addEventListener('resize', clampAndRender);
 
   function updateButtons(){
     const ready = frontSrc && backSrc;
@@ -626,7 +652,8 @@
 
   // Render the A4 sheet at true print resolution (300 DPI) so quality never degrades
   async function renderHighResCanvas(){
-    const dpiScale = (300 / 25.4) / (PREVIEW_W / PAGE_W_MM); // scale factor to reach 300 DPI
+    const currentW = sheet.getBoundingClientRect().width; // read live, not a fixed constant
+    const dpiScale = (300 / 25.4) / (currentW / PAGE_W_MM); // scale factor to reach 300 DPI
     return await html2canvas(sheet, {
       scale: dpiScale,
       backgroundColor: '#ffffff',
