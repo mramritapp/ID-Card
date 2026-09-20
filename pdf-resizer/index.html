@@ -1,113 +1,609 @@
 <!DOCTYPE html>
-<html lang="hi">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Coming Soon</title>
+  <title>PDF Resizer - Cyber Cafe Tools</title>
+  
+  <!-- Google Font: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- pdf.js for rendering PDF pages -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <!-- jsPDF for creating compressed PDF -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
   <style>
+    :root {
+      --accent: #FF6FA5;
+      --accent-hover: #ff5292;
+      --bg-dark: #0B0E17;
+      --card-bg: rgba(255, 255, 255, 0.07);
+      --card-border: rgba(255, 255, 255, 0.14);
+      --text-main: #FFFFFF;
+      --text-muted: #A0A5B5;
+    }
+
     * {
+      box-sizing: border-box;
       margin: 0;
       padding: 0;
-      box-sizing: border-box;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-family: 'Inter', sans-serif;
     }
 
-    body {
-      min-height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      overflow: hidden;
-      /* बहते हुए मल्टी-कलर बैकग्राउंड का ग्रेडिएंट */
-      background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab, #8a2be2);
-      background-size: 400% 400%;
-      animation: gradientFlow 10s ease infinite;
-    }
-
-    /* बैकग्राउंड कलर्स का फ्लो (Animation) */
-    @keyframes gradientFlow {
-      0% {
-        background-position: 0% 50%;
-      }
-      50% {
-        background-position: 100% 50%;
-      }
-      100% {
-        background-position: 0% 50%;
-      }
-    }
-
-    /* बीच का लिक्विड ग्लास बॉक्स (Liquid Glass Box) */
-    .glass-box {
-      position: relative;
-      padding: 50px 80px;
-      background: rgba(255, 255, 255, 0.15);
-      border-radius: 25px;
-      backdrop-filter: blur(15px);
-      -webkit-backdrop-filter: blur(15px);
-      border: 1px solid rgba(255, 255, 255, 0.3);
-      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.25),
-                  inset 0 0 15px rgba(255, 255, 255, 0.2);
-      text-align: center;
+    html, body {
+      width: 100%;
+      height: 100%;
+      background-color: var(--bg-dark);
+      color: var(--text-main);
       overflow: hidden;
     }
 
-    /* लिक्विड ग्लास पर शाइन/रिफ्लेक्शन इफेक्ट */
-    .glass-box::before {
-      content: '';
+    /* Ambient Floating Orbs */
+    .orb {
       position: absolute;
-      top: -50%;
-      left: -50%;
-      width: 200%;
-      height: 200%;
-      background: linear-gradient(
-        45deg,
-        transparent,
-        rgba(255, 255, 255, 0.13),
-        transparent
-      );
-      transform: rotate(45deg);
-      animation: glassShine 6s infinite;
+      border-radius: 50%;
+      filter: blur(80px);
+      z-index: 0;
+      pointer-events: none;
+      animation: float 18s ease-in-out infinite alternate;
+    }
+    .orb-1 {
+      width: 320px;
+      height: 320px;
+      background: rgba(255, 111, 165, 0.25);
+      top: -60px;
+      left: -60px;
+    }
+    .orb-2 {
+      width: 400px;
+      height: 400px;
+      background: rgba(90, 169, 255, 0.2);
+      bottom: -100px;
+      right: -80px;
+      animation-delay: -6s;
+    }
+    .orb-3 {
+      width: 280px;
+      height: 280px;
+      background: rgba(255, 138, 80, 0.18);
+      top: 40%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      animation-delay: -12s;
     }
 
-    @keyframes glassShine {
-      0% {
-        transform: translateY(-100%) rotate(45deg);
-      }
-      100% {
-        transform: translateY(100%) rotate(45deg);
-      }
+    @keyframes float {
+      0% { transform: translate(0, 0) scale(1); }
+      100% { transform: translate(30px, 40px) scale(1.08); }
     }
 
-    /* "Coming Soon" लिखा हुआ टेक्स्ट */
-    .glass-box h1 {
-      color: #ffffff;
-      font-size: 3.5rem;
-      font-weight: 800;
-      letter-spacing: 4px;
+    /* Top Bar Header */
+    header {
+      position: relative;
+      z-index: 10;
+      height: 60px;
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--card-border);
+      background: rgba(11, 14, 23, 0.6);
+      backdrop-filter: blur(12px);
+    }
+
+    .home-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      color: var(--text-main);
+      text-decoration: none;
+      font-size: 0.88rem;
+      font-weight: 500;
+      backdrop-filter: blur(16px);
+      transition: all 0.2s ease;
+    }
+    .home-btn:hover {
+      background: rgba(255, 255, 255, 0.14);
+      border-color: rgba(255, 255, 255, 0.25);
+    }
+
+    .app-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .app-title span {
+      color: var(--accent);
+    }
+
+    /* Main Grid Layout */
+    .main-container {
+      position: relative;
+      z-index: 5;
+      height: calc(100vh - 60px);
+      display: grid;
+      grid-template-columns: 360px 1fr;
+      gap: 20px;
+      padding: 20px;
+    }
+
+    /* Glass Panel Styling */
+    .glass-panel {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      backdrop-filter: blur(22px) saturate(160%);
+      border-radius: 16px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      overflow-y: auto;
+    }
+
+    .panel-heading {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--accent);
       text-transform: uppercase;
-      text-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+      letter-spacing: 0.5px;
     }
 
-    /* मोबाइल स्क्रीन के लिए रेस्पॉन्सिव */
-    @media (max-width: 600px) {
-      .glass-box {
-        padding: 35px 40px;
-        width: 85%;
+    /* Upload Box */
+    .file-input-wrapper {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 28px 16px;
+      border: 2px dashed rgba(255, 111, 165, 0.4);
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.02);
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.2s ease;
+    }
+    .file-input-wrapper:hover {
+      border-color: var(--accent);
+      background: rgba(255, 111, 165, 0.05);
+    }
+    .file-input-wrapper input[type="file"] {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      cursor: pointer;
+    }
+    .upload-icon {
+      width: 36px;
+      height: 36px;
+      fill: var(--accent);
+      margin-bottom: 8px;
+    }
+    .upload-text {
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
+
+    /* Form Inputs */
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .input-group label {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+    .target-size-row {
+      display: flex;
+      gap: 10px;
+    }
+    .text-input {
+      flex: 1;
+      background: rgba(0, 0, 0, 0.25);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 10px 12px;
+      color: #fff;
+      font-size: 0.95rem;
+      outline: none;
+    }
+    .text-input:focus {
+      border-color: var(--accent);
+    }
+    .unit-select {
+      width: 80px;
+      background: rgba(0, 0, 0, 0.25);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 10px 8px;
+      color: #fff;
+      font-size: 0.95rem;
+      outline: none;
+      cursor: pointer;
+    }
+    .unit-select option {
+      background: #151928;
+      color: #fff;
+    }
+
+    /* File Info Box */
+    .file-info-box {
+      background: rgba(0, 0, 0, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 10px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-size: 0.85rem;
+    }
+    .info-item {
+      display: flex;
+      justify-content: space-between;
+    }
+    .info-label {
+      color: var(--text-muted);
+    }
+    .info-val {
+      font-weight: 600;
+    }
+
+    /* Buttons */
+    .btn {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 10px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+    }
+    .btn-primary {
+      background: var(--accent);
+      color: #0B0E17;
+    }
+    .btn-primary:hover:not(:disabled) {
+      background: var(--accent-hover);
+      box-shadow: 0 0 15px rgba(255, 111, 165, 0.4);
+    }
+    .btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    /* Progress & Status */
+    .status-text {
+      font-size: 0.82rem;
+      text-align: center;
+      color: var(--text-muted);
+    }
+
+    /* Right Preview Container */
+    .preview-panel {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    .preview-scroll-area {
+      width: 100%;
+      height: 100%;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      padding: 10px;
+    }
+
+    .page-canvas-wrapper {
+      box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+      border-radius: 4px;
+      overflow: hidden;
+      background: #fff;
+      max-width: 100%;
+    }
+    .page-canvas-wrapper canvas {
+      display: block;
+      max-width: 100%;
+      height: auto;
+    }
+
+    .placeholder-msg {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      text-align: center;
+    }
+
+    /* Mobile / Small Screen Responsive Rules */
+    @media (max-height: 700px), (max-width: 860px) {
+      html, body {
+        overflow: auto;
+        height: auto;
       }
-      .glass-box h1 {
-        font-size: 2rem;
-        letter-spacing: 2px;
+      .main-container {
+        grid-template-columns: 1fr;
+        height: auto;
+      }
+      .preview-panel {
+        min-height: 400px;
       }
     }
   </style>
 </head>
 <body>
 
-  <!-- बीच में लिक्विड ग्लास बॉक्स -->
-  <div class="glass-box">
-    <h1>Coming Soon</h1>
+  <!-- Ambient Background Orbs -->
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+
+  <!-- Header -->
+  <header>
+    <a href="../index.html" class="home-btn">← Home</a>
+    <div class="app-title">PDF <span>Resizer</span></div>
+  </header>
+
+  <!-- Main Container -->
+  <div class="main-container">
+    
+    <!-- Controls Left Panel -->
+    <div class="glass-panel">
+      <div class="panel-heading">Upload & Compress</div>
+
+      <!-- File Upload Area -->
+      <div class="file-input-wrapper">
+        <svg class="upload-icon" viewBox="0 0 24 24">
+          <path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/>
+        </svg>
+        <div class="upload-text" id="uploadText">Select PDF File</div>
+        <input type="file" id="pdfFileInput" accept="application/pdf">
+      </div>
+
+      <!-- Target Size Input -->
+      <div class="input-group">
+        <label>Target File Size</label>
+        <div class="target-size-row">
+          <input type="number" id="targetSizeInput" class="text-input" placeholder="e.g. 200" value="200" min="1">
+          <select id="unitSelect" class="unit-select">
+            <option value="KB" selected>KB</option>
+            <option value="MB">MB</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Original vs Output Size Details -->
+      <div class="file-info-box" id="infoBox" style="display: none;">
+        <div class="info-item">
+          <span class="info-label">Original Size:</span>
+          <span class="info-val" id="origSizeText">-</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Pages:</span>
+          <span class="info-val" id="pageCountText">-</span>
+        </div>
+        <div class="info-item" id="resultRow" style="display: none;">
+          <span class="info-label" style="color: var(--accent);">Resized Size:</span>
+          <span class="info-val" id="compressedSizeText" style="color: var(--accent);">-</span>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <button class="btn btn-primary" id="compressBtn" disabled>Compress PDF</button>
+      <button class="btn btn-primary" id="downloadBtn" style="display: none; background: #4FD98A; color: #0B0E17;">Download PDF</button>
+
+      <div class="status-text" id="statusText">Upload a PDF to get started</div>
+    </div>
+
+    <!-- Preview Right Panel -->
+    <div class="glass-panel preview-panel">
+      <div class="preview-scroll-area" id="previewArea">
+        <div class="placeholder-msg">PDF preview will appear here</div>
+      </div>
+    </div>
+
   </div>
 
+  <script>
+    // Initialize PDF.js worker
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+    // DOM Elements
+    const pdfFileInput = document.getElementById('pdfFileInput');
+    const uploadText = document.getElementById('uploadText');
+    const targetSizeInput = document.getElementById('targetSizeInput');
+    const unitSelect = document.getElementById('unitSelect');
+    const infoBox = document.getElementById('infoBox');
+    const origSizeText = document.getElementById('origSizeText');
+    const pageCountText = document.getElementById('pageCountText');
+    const resultRow = document.getElementById('resultRow');
+    const compressedSizeText = document.getElementById('compressedSizeText');
+    const compressBtn = document.getElementById('compressBtn');
+    const downloadBtn = document.getElementById('downloadBtn');
+    const statusText = document.getElementById('statusText');
+    const previewArea = document.getElementById('previewArea');
+
+    let currentFile = null;
+    let pdfDoc = null;
+    let compressedPdfBlob = null;
+
+    // Helper: Format bytes to human readable string
+    function formatBytes(bytes) {
+      if (bytes === 0) return '0 Bytes';
+      const k = 1024;
+      const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    // PDF File Select Event
+    pdfFileInput.addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file || file.type !== 'application/pdf') return;
+
+      currentFile = file;
+      uploadText.textContent = file.name;
+      origSizeText.textContent = formatBytes(file.size);
+      infoBox.style.display = 'flex';
+      resultRow.style.display = 'none';
+      downloadBtn.style.display = 'none';
+      compressBtn.style.display = 'flex';
+      compressBtn.disabled = true;
+      statusText.textContent = 'Loading PDF preview...';
+
+      try {
+        const arrayBuffer = await file.arrayBuffer();
+        pdfDoc = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+        pageCountText.textContent = pdfDoc.numPages;
+
+        // Render preview pages
+        previewArea.innerHTML = '';
+        for (let pageNum = 1; pageNum <= Math.min(pdfDoc.numPages, 5); pageNum++) {
+          const page = await pdfDoc.getPage(pageNum);
+          const viewport = page.getViewport({ scale: 1.0 });
+          
+          const wrapper = document.createElement('div');
+          wrapper.className = 'page-canvas-wrapper';
+          const canvas = document.createElement('canvas');
+          const context = canvas.getContext('2d');
+          canvas.width = viewport.width;
+          canvas.height = viewport.height;
+
+          wrapper.appendChild(canvas);
+          previewArea.appendChild(wrapper);
+
+          await page.render({ canvasContext: context, viewport: viewport }).promise;
+        }
+
+        compressBtn.disabled = false;
+        statusText.textContent = 'Ready to compress';
+      } catch (err) {
+        console.error(err);
+        statusText.textContent = 'Failed to load PDF file';
+      }
+    });
+
+    // Compression Handler
+    compressBtn.addEventListener('click', async () => {
+      if (!pdfDoc || !currentFile) return;
+
+      const targetValue = parseFloat(targetSizeInput.value);
+      if (!targetValue || targetValue <= 0) {
+        alert('Please enter a valid target size');
+        return;
+      }
+
+      const unit = unitSelect.value;
+      const targetSizeBytes = unit === 'MB' ? targetValue * 1024 * 1024 : targetValue * 1024;
+
+      compressBtn.disabled = true;
+      statusText.textContent = 'Compressing PDF pages...';
+
+      try {
+        const { jsPDF } = window.jspdf;
+        let quality = 0.65;
+        let scale = 1.2;
+
+        // Estimate parameters based on size target
+        if (targetSizeBytes < currentFile.size * 0.3) {
+          quality = 0.35;
+          scale = 0.9;
+        } else if (targetSizeBytes < currentFile.size * 0.6) {
+          quality = 0.55;
+          scale = 1.0;
+        }
+
+        let newPdf = null;
+        let resultBlob = null;
+
+        // Iterative compression to match target size closely
+        for (let attempt = 0; attempt < 3; attempt++) {
+          newPdf = null;
+
+          for (let pageNum = 1; pageNum <= pdfDoc.numPages; pageNum++) {
+            const page = await pdfDoc.getPage(pageNum);
+            const viewport = page.getViewport({ scale: scale });
+
+            const canvas = document.createElement('canvas');
+            canvas.width = viewport.width;
+            canvas.height = viewport.height;
+            const ctx = canvas.getContext('2d');
+
+            await page.render({ canvasContext: ctx, viewport: viewport }).promise;
+
+            const imgData = canvas.toDataURL('image/jpeg', quality);
+            const orientation = viewport.width > viewport.height ? 'l' : 'p';
+
+            if (!newPdf) {
+              newPdf = new jsPDF({
+                orientation: orientation,
+                unit: 'px',
+                format: [viewport.width, viewport.height]
+              });
+            } else {
+              newPdf.addPage([viewport.width, viewport.height], orientation);
+            }
+
+            newPdf.addImage(imgData, 'JPEG', 0, 0, viewport.width, viewport.height);
+          }
+
+          resultBlob = newPdf.output('blob');
+
+          // If blob is close to target or smaller, break
+          if (resultBlob.size <= targetSizeBytes || quality <= 0.2) {
+            break;
+          }
+
+          // Adjust quality/scale for next iteration
+          quality = Math.max(0.15, quality - 0.2);
+          scale = Math.max(0.7, scale - 0.15);
+        }
+
+        compressedPdfBlob = resultBlob;
+        compressedSizeText.textContent = formatBytes(resultBlob.size);
+        resultRow.style.display = 'flex';
+
+        compressBtn.style.display = 'none';
+        downloadBtn.style.display = 'flex';
+        statusText.textContent = 'Compression complete!';
+      } catch (err) {
+        console.error(err);
+        statusText.textContent = 'Error compressing PDF';
+        compressBtn.disabled = false;
+      }
+    });
+
+    // Download Button Click
+    downloadBtn.addEventListener('click', () => {
+      if (!compressedPdfBlob) return;
+      const url = URL.createObjectURL(compressedPdfBlob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = currentFile ? 'compressed_' + currentFile.name : 'compressed.pdf';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    });
+  </script>
 </body>
 </html>
