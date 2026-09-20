@@ -483,6 +483,7 @@
       resultRow.style.display = 'none';
       downloadBtn.style.display = 'none';
       compressBtn.disabled = true;
+      compressBtn.textContent = 'Compress PDF';
       statusText.textContent = 'Loading PDF preview...';
 
       try {
@@ -517,7 +518,7 @@
       }
     });
 
-    // Compression Logic (Generates PDF matching scale & quality)
+    // Helper to generate PDF with controlled scale and quality
     async function generatePdfAtQuality(scale, quality) {
       const { jsPDF } = window.jspdf;
       let newPdf = null;
@@ -529,7 +530,11 @@
         const canvas = document.createElement('canvas');
         canvas.width = viewport.width;
         canvas.height = viewport.height;
-        const ctx = canvas.getContext('2d');
+        const ctx = canvas.getContext('2d', { alpha: false });
+
+        // High quality rendering context
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
 
         await page.render({ canvasContext: ctx, viewport: viewport }).promise;
 
@@ -546,7 +551,7 @@
           newPdf.addPage([viewport.width, viewport.height], orientation);
         }
 
-        newPdf.addImage(imgData, 'JPEG', 0, 0, viewport.width, viewport.height);
+        newPdf.addImage(imgData, 'JPEG', 0, 0, viewport.width, viewport.height, undefined, 'FAST');
       }
 
       return newPdf.output('blob');
@@ -565,67 +570,77 @@
       const unit = unitSelect.value;
       const targetSizeBytes = unit === 'MB' ? targetValue * 1024 * 1024 : targetValue * 1024;
 
+      if (targetSizeBytes >= currentFile.size) {
+        alert('Target size should be smaller than original file size (' + formatBytes(currentFile.size) + ')');
+        return;
+      }
+
       compressBtn.disabled = true;
-      statusText.textContent = 'Compressing PDF to target size...';
+      statusText.textContent = 'Calculating optimal compression...';
 
       try {
         let bestBlob = null;
+        
+        // Fine-tuned multi-tier scales to prevent massive drop in file size
+        const scales = [2.0, 1.75, 1.5, 1.25, 1.0, 0.85, 0.7, 0.55, 0.4, 0.25, 0.15];
 
-        // Dynamic base scale depending on how small target is
-        let scaleSteps = [1.2, 1.0, 0.8, 0.6, 0.4, 0.2, 0.1];
-        if (targetSizeBytes < 50 * 1024) {
-          scaleSteps = [0.5, 0.3, 0.2, 0.1, 0.05];
-        }
-
-        let matched = false;
-
-        for (let scale of scaleSteps) {
-          let lowQ = 0.02;
-          let highQ = 0.92;
+        for (let scale of scales) {
+          // Check if maximum quality at this scale is within target
+          let testBlob = await generatePdfAtQuality(scale, 0.95);
           
-          // Try highest quality at current scale
-          let testBlob = await generatePdfAtQuality(scale, highQ);
           if (testBlob.size <= targetSizeBytes) {
+            // Found a good scale where max quality fits or is very close
             bestBlob = testBlob;
-            matched = true;
-            break;
-          }
-
-          // If lowest quality at current scale is still larger than target, downscale further
-          let minBlob = await generatePdfAtQuality(scale, lowQ);
-          if (minBlob.size > targetSizeBytes) {
-            bestBlob = minBlob; // Keep as fallback
-            continue;
-          }
-
-          // Binary Search for quality setting
-          for (let i = 0; i < 4; i++) {
-            let midQ = (lowQ + highQ) / 2;
-            let currentBlob = await generatePdfAtQuality(scale, midQ);
-
-            if (currentBlob.size <= targetSizeBytes) {
-              bestBlob = currentBlob;
-              lowQ = midQ; // try higher quality
-            } else {
-              highQ = midQ; // reduce quality
+            
+            // Binary search to get as close to target as possible (maximizing quality)
+            let minQ = 0.60;
+            let maxQ = 0.98;
+            
+            for (let i = 0; i < 5; i++) {
+              let midQ = (minQ + maxQ) / 2;
+              let currentBlob = await generatePdfAtQuality(scale, midQ);
+              
+              if (currentBlob.size <= targetSizeBytes) {
+                bestBlob = currentBlob;
+                minQ = midQ; // try higher quality to reach closer to target
+              } else {
+                maxQ = midQ; // target exceeded, reduce quality
+              }
+            }
+            break; // Stop scale loop since target size was achieved with highest resolution possible
+          } else {
+            // Check lower quality bound at current scale before abandoning scale
+            let minQualityBlob = await generatePdfAtQuality(scale, 0.20);
+            if (minQualityBlob.size <= targetSizeBytes) {
+              // Binary search between 0.20 and 0.95
+              let minQ = 0.20;
+              let maxQ = 0.95;
+              
+              for (let i = 0; i < 6; i++) {
+                let midQ = (minQ + maxQ) / 2;
+                let currentBlob = await generatePdfAtQuality(scale, midQ);
+                
+                if (currentBlob.size <= targetSizeBytes) {
+                  bestBlob = currentBlob;
+                  minQ = midQ;
+                } else {
+                  maxQ = midQ;
+                }
+              }
+              break;
             }
           }
-
-          if (bestBlob && bestBlob.size <= targetSizeBytes) {
-            matched = true;
-            break;
-          }
         }
 
+        // Fallback for extremely small sizes
         if (!bestBlob) {
-          bestBlob = await generatePdfAtQuality(0.1, 0.01);
+          bestBlob = await generatePdfAtQuality(0.1, 0.1);
         }
 
         compressedPdfBlob = bestBlob;
         compressedSizeText.textContent = formatBytes(bestBlob.size);
         resultRow.style.display = 'flex';
 
-        // Keep compress button visible so user can re-compress if needed
         compressBtn.disabled = false;
         compressBtn.textContent = 'Re-Compress PDF';
         downloadBtn.style.display = 'flex';
