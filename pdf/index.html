@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PDF Maker - Cyber Cafe Tools</title>
+  <title>Image to PDF Maker - Cyber Cafe Tools</title>
   
   <!-- Google Font: Inter -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -113,7 +113,7 @@
       z-index: 5;
       height: calc(100vh - 60px);
       display: grid;
-      grid-template-columns: 380px 1fr;
+      grid-template-columns: 360px 1fr;
       gap: 20px;
       padding: 20px;
       min-height: 0;
@@ -144,30 +144,6 @@
       letter-spacing: 0.5px;
     }
 
-    .tab-container {
-      display: flex;
-      gap: 8px;
-      background: rgba(0, 0, 0, 0.3);
-      padding: 4px;
-      border-radius: 10px;
-    }
-    .tab-btn {
-      flex: 1;
-      padding: 8px;
-      border: none;
-      border-radius: 8px;
-      background: transparent;
-      color: var(--text-muted);
-      font-size: 0.85rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    .tab-btn.active {
-      background: var(--accent);
-      color: #0B0E17;
-    }
-
     .file-input-wrapper {
       position: relative;
       display: flex;
@@ -180,6 +156,10 @@
       background: rgba(255, 255, 255, 0.02);
       cursor: pointer;
       text-align: center;
+      transition: border-color 0.2s;
+    }
+    .file-input-wrapper:hover {
+      border-color: var(--accent);
     }
     .file-input-wrapper input[type="file"] {
       position: absolute;
@@ -198,7 +178,7 @@
       font-size: 0.82rem;
       color: var(--text-muted);
     }
-    .text-input, textarea, select {
+    .text-input, select {
       width: 100%;
       background: rgba(0, 0, 0, 0.25);
       border: 1px solid var(--card-border);
@@ -207,10 +187,6 @@
       color: #fff;
       font-size: 0.9rem;
       outline: none;
-    }
-    textarea {
-      height: 120px;
-      resize: vertical;
     }
 
     .btn {
@@ -236,49 +212,104 @@
       height: 100%;
       min-height: 0;
     }
-    .preview-scroll-area {
+
+    /* Grid Gallery Preview (Matching User Screenshot Layout) */
+    .preview-grid-container {
       width: 100%;
       flex: 1;
       overflow-y: auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 16px;
+      padding: 10px;
+      align-content: start;
+    }
+
+    .grid-card {
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 12px;
+      padding: 12px;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 16px;
-      padding: 10px;
+      justify-content: space-between;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
+      cursor: grab;
+      position: relative;
+      transition: transform 0.2s, box-shadow 0.2s;
+      user-select: none;
+      height: 240px;
+    }
+    .grid-card:active {
+      cursor: grabbing;
+    }
+    .grid-card.dragging {
+      opacity: 0.4;
+      transform: scale(0.95);
+      border: 2px dashed var(--accent);
     }
 
-    .preview-item {
-      position: relative;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.5);
-      border-radius: 8px;
+    .image-frame {
+      width: 100%;
+      height: 170px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #f0f2f5;
+      border-radius: 6px;
       overflow: hidden;
-      background: #fff;
-      max-width: 600px;
-      width: 100%;
     }
-    .preview-item img {
-      width: 100%;
-      display: block;
+
+    .image-frame img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+      pointer-events: none;
     }
-    .preview-item-text {
-      padding: 20px;
-      color: #000;
-      font-size: 0.95rem;
-      white-space: pre-wrap;
-      min-height: 300px;
+
+    .card-footer {
+      width: 100%;
+      margin-top: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+    }
+
+    .file-name {
+      font-size: 0.78rem;
+      color: #333333;
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      flex: 1;
     }
 
     .delete-btn {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      background: rgba(255, 0, 0, 0.8);
+      background: #ff4d4d;
       color: white;
       border: none;
-      padding: 6px 10px;
-      border-radius: 6px;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
       cursor: pointer;
       font-size: 0.75rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: background 0.2s;
+    }
+    .delete-btn:hover {
+      background: #e60000;
+    }
+
+    .placeholder-msg {
+      color: var(--text-muted);
+      grid-column: 1 / -1;
+      text-align: center;
+      margin: auto;
     }
 
     @media (max-width: 860px) {
@@ -295,37 +326,18 @@
 
   <header>
     <a href="../index.html" class="home-btn">← Home</a>
-    <div class="app-title">PDF <span>Maker</span></div>
+    <div class="app-title">Image to PDF <span>Maker</span></div>
   </header>
 
   <div class="main-container">
     
+    <!-- Control Left Panel -->
     <div class="glass-panel left-panel">
-      <div class="panel-heading">Create PDF</div>
+      <div class="panel-heading">Upload Options</div>
 
-      <div class="tab-container">
-        <button class="tab-btn active" id="tabImages">Image to PDF</button>
-        <button class="tab-btn" id="tabText">Text to PDF</button>
-      </div>
-
-      <!-- Mode 1: Image Mode -->
-      <div id="imageModeSection">
-        <div class="file-input-wrapper">
-          <div style="font-size:0.9rem; font-weight:500;" id="uploadMsg">Select Images (PNG / JPG)</div>
-          <input type="file" id="imageInput" accept="image/*" multiple>
-        </div>
-      </div>
-
-      <!-- Mode 2: Text Mode -->
-      <div id="textModeSection" style="display: none;">
-        <div class="input-group">
-          <label>Document Title</label>
-          <input type="text" id="docTitle" class="text-input" placeholder="e.g. My Notes">
-        </div>
-        <div class="input-group" style="margin-top: 10px;">
-          <label>Document Content</label>
-          <textarea id="docContent" placeholder="Type or paste your text content here..."></textarea>
-        </div>
+      <div class="file-input-wrapper">
+        <div style="font-size:0.9rem; font-weight:500;" id="uploadMsg">+ Select or Drop Images</div>
+        <input type="file" id="imageInput" accept="image/*" multiple>
       </div>
 
       <div class="input-group">
@@ -334,180 +346,175 @@
       </div>
 
       <div class="input-group">
-        <label>Page Orientation</label>
+        <label>Page Orientation / Size</label>
         <select id="orientationSelect">
-          <option value="p">Portrait</option>
-          <option value="l">Landscape</option>
+          <option value="original" selected>Original (Image Size - Unchanged)</option>
+          <option value="p">A4 Portrait</option>
+          <option value="l">A4 Landscape</option>
         </select>
       </div>
 
       <button class="btn" id="generatePdfBtn">Download PDF</button>
     </div>
 
-    <!-- Right Preview Panel -->
+    <!-- Right Preview Panel (Grid Layout with Drag & Drop) -->
     <div class="glass-panel preview-panel">
-      <div class="panel-heading">Live Preview</div>
-      <div class="preview-scroll-area" id="previewArea">
-        <div style="color: var(--text-muted); margin: auto;">Add images or write text to see preview</div>
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <div class="panel-heading">Image Gallery Preview</div>
+        <div style="font-size: 0.75rem; color: var(--text-muted);">Drag photos to reorder</div>
+      </div>
+      
+      <div class="preview-grid-container" id="previewContainer">
+        <div class="placeholder-msg">Uploaded images will appear here</div>
       </div>
     </div>
 
   </div>
 
   <script>
-    const tabImages = document.getElementById('tabImages');
-    const tabText = document.getElementById('tabText');
-    const imageModeSection = document.getElementById('imageModeSection');
-    const textModeSection = document.getElementById('textModeSection');
     const imageInput = document.getElementById('imageInput');
-    const docTitle = document.getElementById('docTitle');
-    const docContent = document.getElementById('docContent');
     const fileNameInput = document.getElementById('fileNameInput');
     const orientationSelect = document.getElementById('orientationSelect');
     const generatePdfBtn = document.getElementById('generatePdfBtn');
-    const previewArea = document.getElementById('previewArea');
+    const previewContainer = document.getElementById('previewContainer');
 
-    let currentMode = 'image'; // 'image' or 'text'
-    let imageFiles = [];
+    // Array to store image objects: { id, dataUrl, name, width, height }
+    let imageList = [];
+    let draggedIndex = null;
 
-    // Switch Tabs
-    tabImages.addEventListener('click', () => {
-      currentMode = 'image';
-      tabImages.classList.add('active');
-      tabText.classList.remove('active');
-      imageModeSection.style.display = 'block';
-      textModeSection.style.display = 'none';
-      renderPreview();
-    });
-
-    tabText.addEventListener('click', () => {
-      currentMode = 'text';
-      tabText.classList.add('active');
-      tabImages.classList.remove('active');
-      imageModeSection.style.display = 'none';
-      textModeSection.style.display = 'block';
-      renderPreview();
-    });
-
-    // Image Input Handle
     imageInput.addEventListener('change', (e) => {
       const files = Array.from(e.target.files);
-      files.forEach(file => {
+      let loadedCount = 0;
+
+      files.forEach((file) => {
         if (file.type.startsWith('image/')) {
           const reader = new FileReader();
           reader.onload = (event) => {
-            imageFiles.push(event.target.result);
-            renderPreview();
+            const img = new Image();
+            img.onload = () => {
+              imageList.push({
+                id: Date.now() + Math.random(),
+                dataUrl: event.target.result,
+                name: file.name,
+                width: img.naturalWidth,
+                height: img.naturalHeight
+              });
+              loadedCount++;
+              if (loadedCount === files.length || imageList.length === files.length) {
+                renderGrid();
+              }
+            };
+            img.src = event.target.result;
           };
           reader.readAsDataURL(file);
         }
       });
+      imageInput.value = '';
     });
 
-    docTitle.addEventListener('input', renderPreview);
-    docContent.addEventListener('input', renderPreview);
+    function renderGrid() {
+      previewContainer.innerHTML = '';
 
-    function renderPreview() {
-      previewArea.innerHTML = '';
+      if (imageList.length === 0) {
+        previewContainer.innerHTML = '<div class="placeholder-msg">Uploaded images will appear here</div>';
+        return;
+      }
 
-      if (currentMode === 'image') {
-        if (imageFiles.length === 0) {
-          previewArea.innerHTML = '<div style="color: var(--text-muted); margin: auto;">Add images to see preview</div>';
-          return;
-        }
+      imageList.forEach((item, index) => {
+        const card = document.createElement('div');
+        card.className = 'grid-card';
+        card.draggable = true;
+        card.dataset.index = index;
 
-        imageFiles.forEach((imgData, index) => {
-          const wrapper = document.createElement('div');
-          wrapper.className = 'preview-item';
-          
-          const img = document.createElement('img');
-          img.src = imgData;
+        card.innerHTML = `
+          <div class="image-frame">
+            <img src="${item.dataUrl}" alt="${item.name}">
+          </div>
+          <div class="card-footer">
+            <span class="file-name" title="${item.name}">${item.name}</span>
+            <button class="delete-btn" onclick="removeImage(${index})">✕</button>
+          </div>
+        `;
 
-          const delBtn = document.createElement('button');
-          delBtn.className = 'delete-btn';
-          delBtn.innerText = 'Remove';
-          delBtn.onclick = () => {
-            imageFiles.splice(index, 1);
-            renderPreview();
-          };
-
-          wrapper.appendChild(img);
-          wrapper.appendChild(delBtn);
-          previewArea.appendChild(wrapper);
+        // Drag & Drop Events
+        card.addEventListener('dragstart', (e) => {
+          draggedIndex = index;
+          card.classList.add('dragging');
+          e.dataTransfer.effectAllowed = 'move';
         });
 
-      } else {
-        const title = docTitle.value.trim();
-        const content = docContent.value.trim();
+        card.addEventListener('dragend', () => {
+          card.classList.remove('dragging');
+          draggedIndex = null;
+        });
 
-        if (!title && !content) {
-          previewArea.innerHTML = '<div style="color: var(--text-muted); margin: auto;">Write text to see preview</div>';
-          return;
-        }
+        card.addEventListener('dragover', (e) => {
+          e.preventDefault();
+          e.dataTransfer.dropEffect = 'move';
+        });
 
-        const wrapper = document.createElement('div');
-        wrapper.className = 'preview-item';
-        
-        const textDiv = document.createElement('div');
-        textDiv.className = 'preview-item-text';
-        textDiv.innerHTML = `<h2>${title}</h2><br><p>${content}</p>`;
+        card.addEventListener('drop', (e) => {
+          e.preventDefault();
+          const targetIndex = parseInt(card.dataset.index);
+          if (draggedIndex !== null && draggedIndex !== targetIndex) {
+            const movedItem = imageList.splice(draggedIndex, 1)[0];
+            imageList.splice(targetIndex, 0, movedItem);
+            renderGrid();
+          }
+        });
 
-        wrapper.appendChild(textDiv);
-        previewArea.appendChild(wrapper);
-      }
+        previewContainer.appendChild(card);
+      });
     }
+
+    window.removeImage = function(index) {
+      imageList.splice(index, 1);
+      renderGrid();
+    };
 
     // Generate PDF Logic
     generatePdfBtn.addEventListener('click', () => {
+      if (imageList.length === 0) {
+        alert('Please upload at least one image!');
+        return;
+      }
+
       const { jsPDF } = window.jspdf;
-      const orientation = orientationSelect.value;
-      const pdf = new jsPDF(orientation, 'pt', 'a4');
-      let filename = fileNameInput.value.trim() || 'document.pdf';
-      if(!filename.endsWith('.pdf')) filename += '.pdf';
+      const option = orientationSelect.value;
+      let filename = fileNameInput.value.trim() || 'Document.pdf';
+      if (!filename.endsWith('.pdf')) filename += '.pdf';
 
-      if (currentMode === 'image') {
-        if (imageFiles.length === 0) {
-          alert('Please upload at least one image!');
-          return;
-        }
+      let pdf = null;
 
-        imageFiles.forEach((imgData, idx) => {
-          if (idx > 0) pdf.addPage();
-          
+      imageList.forEach((item, idx) => {
+        if (option === 'original') {
+          // Original size of image without modification
+          const orientation = item.width > item.height ? 'l' : 'p';
+          if (idx === 0) {
+            pdf = new jsPDF({
+              orientation: orientation,
+              unit: 'px',
+              format: [item.width, item.height]
+            });
+          } else {
+            pdf.addPage([item.width, item.height], orientation);
+          }
+          pdf.addImage(item.dataUrl, 'JPEG', 0, 0, item.width, item.height);
+        } else {
+          // Standard A4 Fit Page Mode
+          if (idx === 0) {
+            pdf = new jsPDF(option, 'pt', 'a4');
+          } else {
+            pdf.addPage('a4', option);
+          }
           const pageWidth = pdf.internal.pageSize.getWidth();
           const pageHeight = pdf.internal.pageSize.getHeight();
 
-          pdf.addImage(imgData, 'JPEG', 0, 0, pageWidth, pageHeight);
-        });
-
-        pdf.save(filename);
-
-      } else {
-        const title = docTitle.value.trim();
-        const content = docContent.value.trim();
-
-        if (!title && !content) {
-          alert('Please write some content to export!');
-          return;
+          pdf.addImage(item.dataUrl, 'JPEG', 0, 0, pageWidth, pageHeight);
         }
+      });
 
-        const pageWidth = pdf.internal.pageSize.getWidth();
-        let yPos = 40;
-
-        if (title) {
-          pdf.setFontSize(20);
-          pdf.text(title, 40, yPos);
-          yPos += 30;
-        }
-
-        if (content) {
-          pdf.setFontSize(12);
-          const lines = pdf.splitTextToSize(content, pageWidth - 80);
-          pdf.text(lines, 40, yPos);
-        }
-
-        pdf.save(filename);
-      }
+      pdf.save(filename);
     });
   </script>
 </body>
