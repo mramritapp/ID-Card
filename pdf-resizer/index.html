@@ -149,12 +149,32 @@
       overflow-y: auto;
     }
 
+    .panel-heading-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
     .panel-heading {
       font-size: 1rem;
       font-weight: 600;
       color: var(--accent);
       text-transform: uppercase;
       letter-spacing: 0.5px;
+    }
+
+    .preview-badge {
+      font-size: 0.75rem;
+      padding: 4px 10px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.1);
+      color: var(--text-muted);
+      border: 1px solid var(--card-border);
+    }
+    .preview-badge.active {
+      background: rgba(255, 111, 165, 0.2);
+      color: var(--accent);
+      border-color: rgba(255, 111, 165, 0.4);
     }
 
     /* Upload Box */
@@ -314,7 +334,7 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
+      justify-content: flex-start;
       position: relative;
     }
 
@@ -335,8 +355,9 @@
       overflow: hidden;
       background: #fff;
       max-width: 100%;
+      position: relative;
     }
-    .page-canvas-wrapper canvas {
+    .page-canvas-wrapper canvas, .page-canvas-wrapper img {
       display: block;
       max-width: 100%;
       height: auto;
@@ -346,6 +367,7 @@
       color: var(--text-muted);
       font-size: 0.95rem;
       text-align: center;
+      margin: auto;
     }
 
     @media (max-height: 700px), (max-width: 860px) {
@@ -431,6 +453,10 @@
 
     <!-- Preview Right Panel -->
     <div class="glass-panel preview-panel">
+      <div class="panel-heading-row" style="width: 100%; margin-bottom: 10px;">
+        <div class="panel-heading">Document Preview</div>
+        <div class="preview-badge" id="previewBadge">Original View</div>
+      </div>
       <div class="preview-scroll-area" id="previewArea">
         <div class="placeholder-msg">PDF preview will appear here</div>
       </div>
@@ -455,10 +481,12 @@
     const downloadBtn = document.getElementById('downloadBtn');
     const statusText = document.getElementById('statusText');
     const previewArea = document.getElementById('previewArea');
+    const previewBadge = document.getElementById('previewBadge');
 
     let currentFile = null;
     let pdfDoc = null;
     let compressedPdfBlob = null;
+    let pageImages = [];
 
     function formatBytes(bytes) {
       if (bytes === 0) return '0 Bytes';
@@ -481,6 +509,8 @@
       compressBtn.disabled = true;
       compressBtn.textContent = 'Process PDF';
       statusText.textContent = 'Loading PDF preview...';
+      previewBadge.textContent = "Original View";
+      previewBadge.classList.remove("active");
 
       try {
         const arrayBuffer = await file.arrayBuffer();
@@ -513,9 +543,11 @@
       }
     });
 
-    async function generateRawPdf(scale, quality) {
+    // Renders canvas pages and saves image preview data
+    async function generatePdfWithPreviewData(scale, quality) {
       const { jsPDF } = window.jspdf;
       let newPdf = null;
+      let imagesData = [];
 
       for (let pageNum = 1; pageNum <= pdfDoc.numPages; pageNum++) {
         const page = await pdfDoc.getPage(pageNum);
@@ -532,6 +564,10 @@
         await page.render({ canvasContext: ctx, viewport: viewport }).promise;
 
         const imgData = canvas.toDataURL('image/jpeg', quality);
+        if (pageNum <= 5) {
+          imagesData.push(imgData);
+        }
+
         const orientation = viewport.width > viewport.height ? 'l' : 'p';
 
         if (!newPdf) {
@@ -547,21 +583,21 @@
         newPdf.addImage(imgData, 'JPEG', 0, 0, viewport.width, viewport.height, undefined, 'FAST');
       }
 
-      return newPdf.output('arraybuffer');
+      return {
+        buffer: newPdf.output('arraybuffer'),
+        images: imagesData
+      };
     }
 
     // PDF Byte Injector Logic to force exact size
     function injectPaddingToExactSize(pdfArrayBuffer, targetSizeBytes) {
       const currentSize = pdfArrayBuffer.byteLength;
       
-      // If compressed PDF is already bigger than target, return as is
       if (currentSize >= targetSizeBytes) {
         return new Blob([pdfArrayBuffer], { type: 'application/pdf' });
       }
 
       const diff = targetSizeBytes - currentSize;
-      
-      // Create PDF Comment Padding (% Extra bytes...)
       const prefix = "\n%PADDING-START\n%";
       const suffix = "\n%PADDING-END\n";
       const headerLength = prefix.length + suffix.length;
@@ -573,12 +609,26 @@
       const paddingEncoder = new TextEncoder();
       const paddingBytes = paddingEncoder.encode(paddingString);
 
-      // Merge Original PDF with injected comment padding
       const finalBuffer = new Uint8Array(pdfArrayBuffer.byteLength + paddingBytes.byteLength);
       finalBuffer.set(new Uint8Array(pdfArrayBuffer), 0);
       finalBuffer.set(paddingBytes, pdfArrayBuffer.byteLength);
 
       return new Blob([finalBuffer], { type: 'application/pdf' });
+    }
+
+    // Render exact post-compression preview
+    function updateCompressedPreview(images) {
+      previewArea.innerHTML = '';
+      images.forEach((dataUrl) => {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'page-canvas-wrapper';
+        const img = document.createElement('img');
+        img.src = dataUrl;
+        wrapper.appendChild(img);
+        previewArea.appendChild(wrapper);
+      });
+      previewBadge.textContent = "Compressed View";
+      previewBadge.classList.add("active");
     }
 
     compressBtn.addEventListener('click', async () => {
@@ -593,46 +643,52 @@
       const unit = unitSelect.value;
       const targetSizeBytes = Math.floor(unit === 'MB' ? targetValue * 1024 * 1024 : targetValue * 1024);
 
+      // ERROR RULE: File size target must be smaller than original file size
+      if (targetSizeBytes >= currentFile.size) {
+        alert(`Error: Target size (${formatBytes(targetSizeBytes)}) original file size (${formatBytes(currentFile.size)}) se chhota hona chahiye! Aap file size badha nahi sakte.`);
+        statusText.textContent = 'Error: Target size must be smaller than original file size';
+        return;
+      }
+
       compressBtn.disabled = true;
       statusText.textContent = 'Optimizing and matching target size...';
 
       try {
-        let bestArrayBuffer = null;
-        
-        // Multi-tier Scales to maintain best quality possible under or near target size
+        let bestResult = null;
         const scales = [2.0, 1.75, 1.5, 1.25, 1.0, 0.85, 0.7, 0.55, 0.4, 0.25];
 
         for (let scale of scales) {
-          // Binary Search for quality at this scale
           let minQ = 0.10;
           let maxQ = 0.98;
-          let scaleBestBuffer = null;
+          let scaleBest = null;
 
           for (let i = 0; i < 6; i++) {
             let midQ = (minQ + maxQ) / 2;
-            let testBuffer = await generateRawPdf(scale, midQ);
+            let res = await generatePdfWithPreviewData(scale, midQ);
             
-            if (testBuffer.byteLength <= targetSizeBytes) {
-              scaleBestBuffer = testBuffer;
-              minQ = midQ; // Try higher quality
+            if (res.buffer.byteLength <= targetSizeBytes) {
+              scaleBest = res;
+              minQ = midQ; 
             } else {
-              maxQ = midQ; // Scale/Quality is too big, lower quality
+              maxQ = midQ; 
             }
           }
 
-          if (scaleBestBuffer) {
-            bestArrayBuffer = scaleBestBuffer;
-            break; // Found the highest scale that fits within target!
+          if (scaleBest) {
+            bestResult = scaleBest;
+            break; 
           }
         }
 
-        // Fallback for extremely low target sizes
-        if (!bestArrayBuffer) {
-          bestArrayBuffer = await generateRawPdf(0.15, 0.10);
+        if (!bestResult) {
+          bestResult = await generatePdfWithPreviewData(0.15, 0.10);
         }
 
-        // Step 2: Inject Byte Padding to hit EXACT KB/MB Target Requested
-        compressedPdfBlob = injectPaddingToExactSize(bestArrayBuffer, targetSizeBytes);
+        // Inject padding to match exact target byte size
+        compressedPdfBlob = injectPaddingToExactSize(bestResult.buffer, targetSizeBytes);
+
+        // Update preview right panel with compressed pages images
+        updateCompressedPreview(bestResult.images);
 
         compressedSizeText.textContent = formatBytes(compressedPdfBlob.size);
         resultRow.style.display = 'flex';
@@ -640,7 +696,7 @@
         compressBtn.disabled = false;
         compressBtn.textContent = 'Re-Process PDF';
         downloadBtn.style.display = 'flex';
-        statusText.textContent = 'Matching & Padding Complete!';
+        statusText.textContent = 'Compression complete! Check compressed preview.';
       } catch (err) {
         console.error(err);
         statusText.textContent = 'Error processing PDF';
