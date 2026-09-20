@@ -150,7 +150,7 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 28px 16px;
+      padding: 24px 16px;
       border: 2px dashed rgba(255, 111, 165, 0.4);
       border-radius: 12px;
       background: rgba(255, 255, 255, 0.02);
@@ -356,14 +356,14 @@
       </div>
 
       <div class="input-group">
-        <label>PDF Option</label>
+        <label>PDF Mode</label>
         <select id="pdfModeSelect">
           <option value="original" selected>Original Image Size</option>
           <option value="margin">Custom Margin Size</option>
         </select>
       </div>
 
-      <!-- Margin Controls (Shows only when Custom Margin is selected) -->
+      <!-- Margin Controls -->
       <div class="input-group" id="marginGroup" style="display: none;">
         <label>
           <span>Page Margin</span>
@@ -372,10 +372,19 @@
         <input type="range" id="marginSlider" class="slider-input" min="0" max="100" value="15">
       </div>
 
+      <!-- File Size Compression Controls -->
+      <div class="input-group">
+        <label>
+          <span>Image Quality (Compression)</span>
+          <span id="qualityVal">40% (Low MB)</span>
+        </label>
+        <input type="range" id="qualitySlider" class="slider-input" min="10" max="100" value="40">
+      </div>
+
       <button class="btn" id="generatePdfBtn">Download PDF</button>
     </div>
 
-    <!-- Right Preview Panel (Grid Gallery) -->
+    <!-- Right Preview Panel -->
     <div class="glass-panel preview-panel">
       <div style="display: flex; justify-content: space-between; align-items: center;">
         <div class="panel-heading">Image Preview</div>
@@ -396,13 +405,14 @@
     const marginGroup = document.getElementById('marginGroup');
     const marginSlider = document.getElementById('marginSlider');
     const marginVal = document.getElementById('marginVal');
+    const qualitySlider = document.getElementById('qualitySlider');
+    const qualityVal = document.getElementById('qualityVal');
     const generatePdfBtn = document.getElementById('generatePdfBtn');
     const previewContainer = document.getElementById('previewContainer');
 
     let imageList = [];
     let draggedIndex = null;
 
-    // Toggle Margin Slider UI
     pdfModeSelect.addEventListener('change', () => {
       if (pdfModeSelect.value === 'margin') {
         marginGroup.style.display = 'flex';
@@ -417,6 +427,17 @@
       applyMarginPreview();
     });
 
+    qualitySlider.addEventListener('input', (e) => {
+      const val = e.target.value;
+      if (val < 40) {
+        qualityVal.innerText = `${val}% (Ultra Small)`;
+      } else if (val < 70) {
+        qualityVal.innerText = `${val}% (Low MB - Recommended)`;
+      } else {
+        qualityVal.innerText = `${val}% (High Quality/Large MB)`;
+      }
+    });
+
     function applyMarginPreview() {
       const margin = pdfModeSelect.value === 'margin' ? parseInt(marginSlider.value) / 3 : 0;
       const frames = document.querySelectorAll('.image-frame');
@@ -425,7 +446,6 @@
       });
     }
 
-    // Upload Handler
     imageInput.addEventListener('change', (e) => {
       const files = Array.from(e.target.files);
       let loadedCount = 0;
@@ -441,7 +461,8 @@
                 dataUrl: event.target.result,
                 name: file.name,
                 width: img.naturalWidth,
-                height: img.naturalHeight
+                height: img.naturalHeight,
+                rawImg: img
               });
               loadedCount++;
               if (loadedCount === files.length) {
@@ -482,7 +503,6 @@
           </div>
         `;
 
-        // Drag & Drop Reorder Events
         card.addEventListener('dragstart', (e) => {
           draggedIndex = index;
           card.classList.add('dragging');
@@ -518,41 +538,83 @@
       renderGrid();
     };
 
-    // Export PDF
+    // Helper: Compress Image to Canvas with Max Width Limit & JPEG Compression
+    function compressImage(imgObj, qualityFactor) {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+
+      // Max width threshold to avoid huge resolutions like 4K/8K
+      const MAX_WIDTH = 1200;
+      let width = imgObj.width;
+      let height = imgObj.height;
+
+      if (width > MAX_WIDTH) {
+        height = Math.round((height * MAX_WIDTH) / width);
+        width = MAX_WIDTH;
+      }
+
+      canvas.width = width;
+      canvas.height = height;
+
+      // Fill white background for transparent PNGs
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(0, 0, width, height);
+
+      ctx.drawImage(imgObj.rawImg, 0, 0, width, height);
+
+      return {
+        compressedDataUrl: canvas.toDataURL('image/jpeg', qualityFactor),
+        width: width,
+        height: height
+      };
+    }
+
+    // Export Compressed PDF
     generatePdfBtn.addEventListener('click', () => {
       if (imageList.length === 0) {
         alert('Please upload at least one image!');
         return;
       }
 
-      const { jsPDF } = window.jspdf;
-      const mode = pdfModeSelect.value;
-      const margin = mode === 'margin' ? parseInt(marginSlider.value) : 0;
-      
-      let filename = fileNameInput.value.trim() || 'Document.pdf';
-      if (!filename.endsWith('.pdf')) filename += '.pdf';
+      generatePdfBtn.innerText = 'Compressing & Downloading...';
+      generatePdfBtn.disabled = true;
 
-      let pdf = null;
+      setTimeout(() => {
+        const { jsPDF } = window.jspdf;
+        const mode = pdfModeSelect.value;
+        const margin = mode === 'margin' ? parseInt(marginSlider.value) : 0;
+        const quality = parseInt(qualitySlider.value) / 100; // e.g. 0.40
+        
+        let filename = fileNameInput.value.trim() || 'Document.pdf';
+        if (!filename.endsWith('.pdf')) filename += '.pdf';
 
-      imageList.forEach((item, idx) => {
-        const totalWidth = item.width + (margin * 2);
-        const totalHeight = item.height + (margin * 2);
-        const orientation = totalWidth > totalHeight ? 'l' : 'p';
+        let pdf = null;
 
-        if (idx === 0) {
-          pdf = new jsPDF({
-            orientation: orientation,
-            unit: 'px',
-            format: [totalWidth, totalHeight]
-          });
-        } else {
-          pdf.addPage([totalWidth, totalHeight], orientation);
-        }
+        imageList.forEach((item, idx) => {
+          const compressed = compressImage(item, quality);
+          
+          const totalWidth = compressed.width + (margin * 2);
+          const totalHeight = compressed.height + (margin * 2);
+          const orientation = totalWidth > totalHeight ? 'l' : 'p';
 
-        pdf.addImage(item.dataUrl, 'JPEG', margin, margin, item.width, item.height);
-      });
+          if (idx === 0) {
+            pdf = new jsPDF({
+              orientation: orientation,
+              unit: 'px',
+              format: [totalWidth, totalHeight]
+            });
+          } else {
+            pdf.addPage([totalWidth, totalHeight], orientation);
+          }
 
-      pdf.save(filename);
+          pdf.addImage(compressed.compressedDataUrl, 'JPEG', margin, margin, compressed.width, compressed.height);
+        });
+
+        pdf.save(filename);
+
+        generatePdfBtn.innerText = 'Download PDF';
+        generatePdfBtn.disabled = false;
+      }, 100);
     });
   </script>
 </body>
