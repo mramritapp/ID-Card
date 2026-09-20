@@ -134,6 +134,7 @@
       grid-template-columns: 360px 1fr;
       gap: 20px;
       padding: 20px;
+      min-height: 0;
     }
 
     /* Glass Panel Styling */
@@ -146,6 +147,11 @@
       display: flex;
       flex-direction: column;
       gap: 16px;
+      overflow: hidden;
+      min-height: 0;
+    }
+
+    .glass-panel.left-panel {
       overflow-y: auto;
     }
 
@@ -153,6 +159,7 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
+      flex-shrink: 0;
     }
 
     .panel-heading {
@@ -329,38 +336,64 @@
       color: var(--text-muted);
     }
 
-    /* Right Preview Container */
+    /* Right Preview Container (Fixed & Enhanced) */
     .preview-panel {
       display: flex;
       flex-direction: column;
-      align-items: center;
+      align-items: stretch;
       justify-content: flex-start;
       position: relative;
+      height: 100%;
+      min-height: 0;
     }
 
     .preview-scroll-area {
       width: 100%;
-      height: 100%;
+      flex: 1;
+      min-height: 0;
       overflow-y: auto;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 16px;
-      padding: 10px;
+      gap: 20px;
+      padding: 10px 10px 20px 10px;
+      scroll-behavior: smooth;
+    }
+
+    /* Custom Scrollbar for Preview */
+    .preview-scroll-area::-webkit-scrollbar {
+      width: 6px;
+    }
+    .preview-scroll-area::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 10px;
+    }
+    .preview-scroll-area::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 10px;
+    }
+    .preview-scroll-area::-webkit-scrollbar-thumb:hover {
+      background: var(--accent);
     }
 
     .page-canvas-wrapper {
-      box-shadow: 0 8px 24px rgba(0,0,0,0.5);
-      border-radius: 4px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+      border-radius: 6px;
       overflow: hidden;
-      background: #fff;
-      max-width: 100%;
+      background: #ffffff;
+      width: 100%;
+      max-width: 720px;
       position: relative;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-shrink: 0;
     }
     .page-canvas-wrapper canvas, .page-canvas-wrapper img {
       display: block;
-      max-width: 100%;
+      width: 100%;
       height: auto;
+      object-fit: contain;
     }
 
     .placeholder-msg {
@@ -380,7 +413,8 @@
         height: auto;
       }
       .preview-panel {
-        min-height: 400px;
+        min-height: 500px;
+        height: 600px;
       }
     }
   </style>
@@ -402,7 +436,7 @@
   <div class="main-container">
     
     <!-- Controls Left Panel -->
-    <div class="glass-panel">
+    <div class="glass-panel left-panel">
       <div class="panel-heading">Upload & Resize</div>
 
       <!-- File Upload Area -->
@@ -520,7 +554,9 @@
         previewArea.innerHTML = '';
         for (let pageNum = 1; pageNum <= Math.min(pdfDoc.numPages, 5); pageNum++) {
           const page = await pdfDoc.getPage(pageNum);
-          const viewport = page.getViewport({ scale: 1.0 });
+          
+          // Improved viewport scale calculation for uniform crisp view
+          const viewport = page.getViewport({ scale: 1.5 });
           
           const wrapper = document.createElement('div');
           wrapper.className = 'page-canvas-wrapper';
