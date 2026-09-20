@@ -3,34 +3,38 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PDF Resizer - Cyber Cafe Tools</title>
+  <title>PDF Resizer Pro - Cyber Cafe Tools</title>
   
   <!-- Google Font: Inter -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   
-  <!-- pdf.js for rendering PDF pages -->
+  <!-- PDF.js Engine -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-  <!-- jsPDF for creating compressed PDF -->
+  <!-- jsPDF Engine -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
   <style>
     :root {
       --accent: #FF6FA5;
       --accent-hover: #ff5292;
+      --accent-glow: rgba(255, 111, 165, 0.35);
       --bg-dark: #0B0E17;
-      --card-bg: rgba(255, 255, 255, 0.07);
-      --card-border: rgba(255, 255, 255, 0.14);
+      --card-bg: rgba(255, 255, 255, 0.06);
+      --card-border: rgba(255, 255, 255, 0.12);
+      --input-bg: rgba(0, 0, 0, 0.35);
       --text-main: #FFFFFF;
       --text-muted: #A0A5B5;
+      --success: #4FD98A;
+      --danger: #FF5252;
     }
 
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
-      font-family: 'Inter', sans-serif;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     }
 
     html, body {
@@ -41,64 +45,74 @@
       overflow: hidden;
     }
 
-    /* Ambient Floating Orbs */
+    /* Ambient Background Elements */
+    .background-orb-layer {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      z-index: 0;
+      pointer-events: none;
+    }
+
     .orb {
       position: absolute;
       border-radius: 50%;
-      filter: blur(80px);
-      z-index: 0;
-      pointer-events: none;
-      animation: float 18s ease-in-out infinite alternate;
-    }
-    .orb-1 {
-      width: 320px;
-      height: 320px;
-      background: rgba(255, 111, 165, 0.25);
-      top: -60px;
-      left: -60px;
-    }
-    .orb-2 {
-      width: 400px;
-      height: 400px;
-      background: rgba(90, 169, 255, 0.2);
-      bottom: -100px;
-      right: -80px;
-      animation-delay: -6s;
-    }
-    .orb-3 {
-      width: 280px;
-      height: 280px;
-      background: rgba(255, 138, 80, 0.18);
-      top: 40%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      animation-delay: -12s;
+      filter: blur(90px);
+      animation: floatOrb 22s ease-in-out infinite alternate;
     }
 
-    @keyframes float {
+    .orb-primary {
+      width: 380px;
+      height: 380px;
+      background: rgba(255, 111, 165, 0.22);
+      top: -80px;
+      left: -80px;
+    }
+
+    .orb-secondary {
+      width: 450px;
+      height: 450px;
+      background: rgba(90, 169, 255, 0.18);
+      bottom: -120px;
+      right: -100px;
+      animation-delay: -7s;
+    }
+
+    .orb-tertiary {
+      width: 300px;
+      height: 300px;
+      background: rgba(255, 138, 80, 0.15);
+      top: 35%;
+      left: 45%;
+      animation-delay: -14s;
+    }
+
+    @keyframes floatOrb {
       0% { transform: translate(0, 0) scale(1); }
-      100% { transform: translate(30px, 40px) scale(1.08); }
+      50% { transform: translate(25px, 35px) scale(1.05); }
+      100% { transform: translate(-20px, -25px) scale(0.95); }
     }
 
-    /* Top Bar Header */
+    /* Header Styling */
     header {
       position: relative;
       z-index: 10;
-      height: 60px;
-      padding: 0 24px;
+      height: 64px;
+      padding: 0 28px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       border-bottom: 1px solid var(--card-border);
-      background: rgba(11, 14, 23, 0.6);
-      backdrop-filter: blur(12px);
+      background: rgba(11, 14, 23, 0.7);
+      backdrop-filter: blur(16px);
     }
 
     .home-btn {
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      padding: 8px 16px;
+      padding: 8px 18px;
       background: var(--card-bg);
       border: 1px solid var(--card-border);
       border-radius: 20px;
@@ -107,20 +121,24 @@
       font-size: 0.88rem;
       font-weight: 500;
       backdrop-filter: blur(16px);
-      transition: all 0.2s ease;
+      transition: all 0.25s ease;
     }
+
     .home-btn:hover {
       background: rgba(255, 255, 255, 0.14);
-      border-color: rgba(255, 255, 255, 0.25);
+      border-color: rgba(255, 255, 255, 0.28);
+      transform: translateY(-1px);
     }
 
     .app-title {
-      font-size: 1.1rem;
+      font-size: 1.15rem;
       font-weight: 600;
       display: flex;
       align-items: center;
       gap: 8px;
+      letter-spacing: -0.2px;
     }
+
     .app-title span {
       color: var(--accent);
     }
@@ -129,154 +147,188 @@
     .main-container {
       position: relative;
       z-index: 5;
-      height: calc(100vh - 60px);
+      height: calc(100vh - 64px);
       display: grid;
-      grid-template-columns: 360px 1fr;
-      gap: 20px;
-      padding: 20px;
+      grid-template-columns: 380px 1fr;
+      gap: 24px;
+      padding: 24px;
     }
 
-    /* Glass Panel Styling */
+    /* Glass Panels */
     .glass-panel {
       background: var(--card-bg);
       border: 1px solid var(--card-border);
-      backdrop-filter: blur(22px) saturate(160%);
-      border-radius: 16px;
-      padding: 20px;
+      backdrop-filter: blur(24px) saturate(170%);
+      border-radius: 18px;
+      padding: 24px;
       display: flex;
       flex-direction: column;
-      gap: 16px;
+      gap: 20px;
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
       overflow-y: auto;
     }
 
-    .panel-heading-row {
+    .panel-header-row {
       display: flex;
       justify-content: space-between;
       align-items: center;
     }
 
     .panel-heading {
-      font-size: 1rem;
-      font-weight: 600;
+      font-size: 0.95rem;
+      font-weight: 700;
       color: var(--accent);
       text-transform: uppercase;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.8px;
     }
 
-    .preview-badge {
+    .status-badge {
       font-size: 0.75rem;
-      padding: 4px 10px;
-      border-radius: 12px;
-      background: rgba(255, 255, 255, 0.1);
+      padding: 5px 12px;
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.08);
       color: var(--text-muted);
       border: 1px solid var(--card-border);
+      font-weight: 500;
+      transition: all 0.3s ease;
     }
-    .preview-badge.active {
-      background: rgba(255, 111, 165, 0.2);
+
+    .status-badge.active-preview {
+      background: rgba(255, 111, 165, 0.18);
       color: var(--accent);
       border-color: rgba(255, 111, 165, 0.4);
     }
 
-    /* Upload Box */
+    /* File Upload Box */
     .file-input-wrapper {
       position: relative;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 28px 16px;
-      border: 2px dashed rgba(255, 111, 165, 0.4);
-      border-radius: 12px;
-      background: rgba(255, 255, 255, 0.02);
+      padding: 32px 20px;
+      border: 2px dashed rgba(255, 111, 165, 0.35);
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.015);
       cursor: pointer;
       text-align: center;
-      transition: all 0.2s ease;
+      transition: all 0.25s ease;
     }
+
     .file-input-wrapper:hover {
       border-color: var(--accent);
-      background: rgba(255, 111, 165, 0.05);
+      background: rgba(255, 111, 165, 0.04);
+      transform: translateY(-1px);
     }
+
     .file-input-wrapper input[type="file"] {
       position: absolute;
+      top: 0;
+      left: 0;
       width: 100%;
       height: 100%;
       opacity: 0;
       cursor: pointer;
     }
+
     .upload-icon {
-      width: 36px;
-      height: 36px;
+      width: 42px;
+      height: 42px;
       fill: var(--accent);
-      margin-bottom: 8px;
+      margin-bottom: 10px;
+      transition: transform 0.25s ease;
     }
+
+    .file-input-wrapper:hover .upload-icon {
+      transform: scale(1.08);
+    }
+
     .upload-text {
-      font-size: 0.9rem;
+      font-size: 0.92rem;
       font-weight: 500;
+      color: var(--text-main);
       word-break: break-all;
     }
 
-    /* Form Inputs */
+    .upload-subtext {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    /* Input Controls */
     .input-group {
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 8px;
     }
+
     .input-group label {
-      font-size: 0.82rem;
+      font-size: 0.84rem;
       color: var(--text-muted);
       font-weight: 500;
     }
+
     .target-size-row {
       display: flex;
-      gap: 10px;
+      gap: 12px;
     }
+
     .text-input {
       flex: 1;
-      background: rgba(0, 0, 0, 0.25);
+      background: var(--input-bg);
       border: 1px solid var(--card-border);
-      border-radius: 8px;
-      padding: 10px 12px;
-      color: #fff;
+      border-radius: 10px;
+      padding: 12px 14px;
+      color: #FFF;
       font-size: 0.95rem;
       outline: none;
+      transition: border-color 0.2s ease;
     }
+
     .text-input:focus {
       border-color: var(--accent);
     }
+
     .unit-select {
-      width: 80px;
-      background: rgba(0, 0, 0, 0.25);
+      width: 90px;
+      background: var(--input-bg);
       border: 1px solid var(--card-border);
-      border-radius: 8px;
-      padding: 10px 8px;
-      color: #fff;
+      border-radius: 10px;
+      padding: 12px 10px;
+      color: #FFF;
       font-size: 0.95rem;
       outline: none;
       cursor: pointer;
     }
+
     .unit-select option {
       background: #151928;
-      color: #fff;
+      color: #FFF;
     }
 
-    /* File Info Box */
+    /* Information Box */
     .file-info-box {
-      background: rgba(0, 0, 0, 0.2);
+      background: rgba(0, 0, 0, 0.25);
       border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 10px;
-      padding: 12px;
+      border-radius: 12px;
+      padding: 14px 16px;
       display: flex;
       flex-direction: column;
-      gap: 6px;
-      font-size: 0.85rem;
+      gap: 8px;
+      font-size: 0.86rem;
     }
+
     .info-item {
       display: flex;
       justify-content: space-between;
+      align-items: center;
     }
+
     .info-label {
       color: var(--text-muted);
     }
+
     .info-val {
       font-weight: 600;
     }
@@ -285,57 +337,70 @@
     .btn-container {
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 12px;
+      margin-top: 4px;
     }
+
     .btn {
       width: 100%;
-      padding: 12px;
+      padding: 14px;
       border: none;
-      border-radius: 10px;
+      border-radius: 12px;
       font-size: 0.95rem;
       font-weight: 600;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 8px;
-      transition: all 0.2s ease;
+      gap: 10px;
+      transition: all 0.25s ease;
     }
+
     .btn-primary {
       background: var(--accent);
       color: #0B0E17;
     }
+
     .btn-primary:hover:not(:disabled) {
       background: var(--accent-hover);
-      box-shadow: 0 0 15px rgba(255, 111, 165, 0.4);
-    }
-    .btn-success {
-      background: #4FD98A;
-      color: #0B0E17;
-    }
-    .btn-success:hover:not(:disabled) {
-      background: #3ec478;
-      box-shadow: 0 0 15px rgba(79, 217, 138, 0.4);
-    }
-    .btn:disabled {
-      opacity: 0.4;
-      cursor: not-allowed;
+      box-shadow: 0 0 20px var(--accent-glow);
+      transform: translateY(-1px);
     }
 
-    /* Progress & Status */
+    .btn-success {
+      background: var(--success);
+      color: #0B0E17;
+    }
+
+    .btn-success:hover:not(:disabled) {
+      background: #3ec478;
+      box-shadow: 0 0 20px rgba(79, 217, 138, 0.4);
+      transform: translateY(-1px);
+    }
+
+    .btn:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+      transform: none !important;
+      box-shadow: none !important;
+    }
+
+    /* Status Display */
     .status-text {
       font-size: 0.82rem;
       text-align: center;
       color: var(--text-muted);
+      line-height: 1.4;
+      min-height: 24px;
     }
 
     /* Right Preview Container */
     .preview-panel {
       display: flex;
       flex-direction: column;
-      align-items: center;
+      align-items: stretch;
       justify-content: flex-start;
-      position: relative;
+      overflow: hidden;
     }
 
     .preview-scroll-area {
@@ -345,22 +410,30 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 16px;
-      padding: 10px;
+      gap: 20px;
+      padding: 16px 10px;
     }
 
-    .page-canvas-wrapper {
-      box-shadow: 0 8px 24px rgba(0,0,0,0.5);
-      border-radius: 4px;
+    /* Preview Canvas and Image Container Fix */
+    .page-preview-card {
+      width: 100%;
+      max-width: 780px;
+      background: #FFFFFF;
+      border-radius: 8px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
       overflow: hidden;
-      background: #fff;
-      max-width: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
       position: relative;
     }
-    .page-canvas-wrapper canvas, .page-canvas-wrapper img {
+
+    .page-preview-card canvas, 
+    .page-preview-card img {
+      width: 100% !important;
+      height: auto !important;
       display: block;
-      max-width: 100%;
-      height: auto;
+      object-fit: contain;
     }
 
     .placeholder-msg {
@@ -368,9 +441,20 @@
       font-size: 0.95rem;
       text-align: center;
       margin: auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
     }
 
-    @media (max-height: 700px), (max-width: 860px) {
+    .placeholder-icon {
+      width: 48px;
+      height: 48px;
+      fill: rgba(255, 255, 255, 0.2);
+    }
+
+    /* Responsive Adjustments */
+    @media (max-height: 720px), (max-width: 900px) {
       html, body {
         overflow: auto;
         height: auto;
@@ -380,45 +464,50 @@
         height: auto;
       }
       .preview-panel {
-        min-height: 400px;
+        min-height: 500px;
       }
     }
   </style>
 </head>
 <body>
 
-  <!-- Ambient Background Orbs -->
-  <div class="orb orb-1"></div>
-  <div class="orb orb-2"></div>
-  <div class="orb orb-3"></div>
+  <!-- Ambient Orb Background -->
+  <div class="background-orb-layer">
+    <div class="orb orb-primary"></div>
+    <div class="orb orb-secondary"></div>
+    <div class="orb orb-tertiary"></div>
+  </div>
 
-  <!-- Header -->
+  <!-- Header Navigation -->
   <header>
     <a href="../index.html" class="home-btn">← Home</a>
-    <div class="app-title">PDF <span>Resizer</span></div>
+    <div class="app-title">PDF <span>Resizer Pro</span></div>
   </header>
 
-  <!-- Main Container -->
+  <!-- Application Body -->
   <div class="main-container">
     
-    <!-- Controls Left Panel -->
+    <!-- Left Operations Panel -->
     <div class="glass-panel">
-      <div class="panel-heading">Upload & Resize</div>
+      <div class="panel-header-row">
+        <div class="panel-heading">Upload & Compress</div>
+      </div>
 
-      <!-- File Upload Area -->
-      <div class="file-input-wrapper">
+      <!-- File Select Dropzone -->
+      <div class="file-input-wrapper" id="dropZone">
         <svg class="upload-icon" viewBox="0 0 24 24">
           <path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/>
         </svg>
         <div class="upload-text" id="uploadText">Select PDF File</div>
+        <div class="upload-subtext">Click or drag PDF here</div>
         <input type="file" id="pdfFileInput" accept="application/pdf">
       </div>
 
-      <!-- Target Size Input -->
+      <!-- Target File Size Selection -->
       <div class="input-group">
-        <label>Exact Target File Size</label>
+        <label for="targetSizeInput">Target Maximum File Size</label>
         <div class="target-size-row">
-          <input type="number" id="targetSizeInput" class="text-input" placeholder="e.g. 200" value="200" min="1">
+          <input type="number" id="targetSizeInput" class="text-input" placeholder="e.g. 200" value="200" min="1" step="any">
           <select id="unitSelect" class="unit-select">
             <option value="KB" selected>KB</option>
             <option value="MB">MB</option>
@@ -426,48 +515,55 @@
         </div>
       </div>
 
-      <!-- Original vs Output Size Details -->
+      <!-- File Statistics Display -->
       <div class="file-info-box" id="infoBox" style="display: none;">
         <div class="info-item">
           <span class="info-label">Original Size:</span>
           <span class="info-val" id="origSizeText">-</span>
         </div>
         <div class="info-item">
-          <span class="info-label">Pages:</span>
+          <span class="info-label">Total Pages:</span>
           <span class="info-val" id="pageCountText">-</span>
         </div>
         <div class="info-item" id="resultRow" style="display: none;">
-          <span class="info-label" style="color: var(--accent);">Final Size:</span>
+          <span class="info-label" style="color: var(--accent);">Compressed Size:</span>
           <span class="info-val" id="compressedSizeText" style="color: var(--accent);">-</span>
         </div>
       </div>
 
-      <!-- Action Buttons -->
+      <!-- Action Buttons Container -->
       <div class="btn-container">
-        <button class="btn btn-primary" id="compressBtn" disabled>Process PDF</button>
-        <button class="btn btn-success" id="downloadBtn" style="display: none;">Download PDF</button>
+        <button class="btn btn-primary" id="compressBtn" disabled>Process & Compress PDF</button>
+        <button class="btn btn-success" id="downloadBtn" style="display: none;">Download Compressed PDF</button>
       </div>
 
-      <div class="status-text" id="statusText">Upload a PDF to get started</div>
+      <div class="status-text" id="statusText">Select a PDF file to begin</div>
     </div>
 
-    <!-- Preview Right Panel -->
+    <!-- Right Live Preview Panel -->
     <div class="glass-panel preview-panel">
-      <div class="panel-heading-row" style="width: 100%; margin-bottom: 10px;">
+      <div class="panel-header-row" style="width: 100%; margin-bottom: 12px;">
         <div class="panel-heading">Document Preview</div>
-        <div class="preview-badge" id="previewBadge">Original View</div>
+        <div class="status-badge" id="previewBadge">Original Document</div>
       </div>
+      
       <div class="preview-scroll-area" id="previewArea">
-        <div class="placeholder-msg">PDF preview will appear here</div>
+        <div class="placeholder-msg">
+          <svg class="placeholder-icon" viewBox="0 0 24 24">
+            <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
+          </svg>
+          <span>Uploaded PDF page previews will render here</span>
+        </div>
       </div>
     </div>
 
   </div>
 
   <script>
-    // Initialize PDF.js worker
+    // Initialize PDF.js Engine Global Worker
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
+    // DOM Element Reference Selection
     const pdfFileInput = document.getElementById('pdfFileInput');
     const uploadText = document.getElementById('uploadText');
     const targetSizeInput = document.getElementById('targetSizeInput');
@@ -483,11 +579,14 @@
     const previewArea = document.getElementById('previewArea');
     const previewBadge = document.getElementById('previewBadge');
 
+    // System Application State Variables
     let currentFile = null;
     let pdfDoc = null;
     let compressedPdfBlob = null;
-    let pageImages = [];
 
+    /**
+     * Utility: Format Raw Bytes into Human Readable Units
+     */
     function formatBytes(bytes) {
       if (bytes === 0) return '0 Bytes';
       const k = 1024;
@@ -496,6 +595,9 @@
       return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
     }
 
+    /**
+     * Event Listener: PDF File Selection and Initial Load
+     */
     pdfFileInput.addEventListener('change', async (e) => {
       const file = e.target.files[0];
       if (!file || file.type !== 'application/pdf') return;
@@ -503,14 +605,16 @@
       currentFile = file;
       uploadText.textContent = file.name;
       origSizeText.textContent = formatBytes(file.size);
+      
       infoBox.style.display = 'flex';
       resultRow.style.display = 'none';
       downloadBtn.style.display = 'none';
       compressBtn.disabled = true;
-      compressBtn.textContent = 'Process PDF';
-      statusText.textContent = 'Loading PDF preview...';
-      previewBadge.textContent = "Original View";
-      previewBadge.classList.remove("active");
+      compressBtn.textContent = 'Process & Compress PDF';
+      statusText.textContent = 'Rendering original PDF preview...';
+      
+      previewBadge.textContent = "Original Document";
+      previewBadge.classList.remove("active-preview");
 
       try {
         const arrayBuffer = await file.arrayBuffer();
@@ -518,54 +622,72 @@
         pageCountText.textContent = pdfDoc.numPages;
 
         previewArea.innerHTML = '';
+        
+        // Render up to 5 initial pages in High Resolution
         for (let pageNum = 1; pageNum <= Math.min(pdfDoc.numPages, 5); pageNum++) {
           const page = await pdfDoc.getPage(pageNum);
-          const viewport = page.getViewport({ scale: 1.0 });
           
-          const wrapper = document.createElement('div');
-          wrapper.className = 'page-canvas-wrapper';
+          // High DPI Scale calculation to prevent blur
+          const scale = 2.0; 
+          const viewport = page.getViewport({ scale: scale });
+          
+          const cardWrapper = document.createElement('div');
+          cardWrapper.className = 'page-preview-card';
+          
           const canvas = document.createElement('canvas');
-          const context = canvas.getContext('2d');
+          const context = canvas.getContext('2d', { alpha: false });
           canvas.width = viewport.width;
           canvas.height = viewport.height;
 
-          wrapper.appendChild(canvas);
-          previewArea.appendChild(wrapper);
+          cardWrapper.appendChild(canvas);
+          previewArea.appendChild(cardWrapper);
 
-          await page.render({ canvasContext: context, viewport: viewport }).promise;
+          await page.render({ 
+            canvasContext: context, 
+            viewport: viewport 
+          }).promise;
         }
 
         compressBtn.disabled = false;
-        statusText.textContent = 'Ready to process';
+        statusText.textContent = 'Original loaded. Ready to compress.';
       } catch (err) {
-        console.error(err);
-        statusText.textContent = 'Failed to load PDF file';
+        console.error("Error loading PDF:", err);
+        statusText.textContent = 'Failed to load PDF document.';
       }
     });
 
-    // Renders canvas pages and saves image preview data
-    async function generatePdfWithPreviewData(scale, quality) {
+    /**
+     * Core Render Engine: Generates High-Resolution PDF pages with Adaptive Quality
+     */
+    async function renderAndBuildPdf(renderScale, imageQuality) {
       const { jsPDF } = window.jspdf;
       let newPdf = null;
-      let imagesData = [];
+      let previewImagesData = [];
 
       for (let pageNum = 1; pageNum <= pdfDoc.numPages; pageNum++) {
         const page = await pdfDoc.getPage(pageNum);
-        const viewport = page.getViewport({ scale: scale });
+        
+        // Ensure minimum 1.5 scale to maintain high clarity
+        const viewport = page.getViewport({ scale: Math.max(renderScale, 1.5) });
 
         const canvas = document.createElement('canvas');
         canvas.width = viewport.width;
         canvas.height = viewport.height;
         const ctx = canvas.getContext('2d', { alpha: false });
 
+        // Enable ultra quality image smoothing
         ctx.imageSmoothingEnabled = true;
         ctx.imageSmoothingQuality = 'high';
 
-        await page.render({ canvasContext: ctx, viewport: viewport }).promise;
+        await page.render({ 
+          canvasContext: ctx, 
+          viewport: viewport 
+        }).promise;
 
-        const imgData = canvas.toDataURL('image/jpeg', quality);
+        const imgData = canvas.toDataURL('image/jpeg', imageQuality);
+        
         if (pageNum <= 5) {
-          imagesData.push(imgData);
+          previewImagesData.push(imgData);
         }
 
         const orientation = viewport.width > viewport.height ? 'l' : 'p';
@@ -585,11 +707,13 @@
 
       return {
         buffer: newPdf.output('arraybuffer'),
-        images: imagesData
+        images: previewImagesData
       };
     }
 
-    // PDF Byte Injector Logic to force exact size
+    /**
+     * Exact Target Matching Byte-Injector
+     */
     function injectPaddingToExactSize(pdfArrayBuffer, targetSizeBytes) {
       const currentSize = pdfArrayBuffer.byteLength;
       
@@ -616,78 +740,90 @@
       return new Blob([finalBuffer], { type: 'application/pdf' });
     }
 
-    // Render exact post-compression preview
-    function updateCompressedPreview(images) {
+    /**
+     * Render Post-Compression Compressed Preview
+     */
+    function updateCompressedPreview(imagesData) {
       previewArea.innerHTML = '';
-      images.forEach((dataUrl) => {
-        const wrapper = document.createElement('div');
-        wrapper.className = 'page-canvas-wrapper';
+      imagesData.forEach((dataUrl) => {
+        const cardWrapper = document.createElement('div');
+        cardWrapper.className = 'page-preview-card';
+        
         const img = document.createElement('img');
         img.src = dataUrl;
-        wrapper.appendChild(img);
-        previewArea.appendChild(wrapper);
+        
+        cardWrapper.appendChild(img);
+        previewArea.appendChild(cardWrapper);
       });
-      previewBadge.textContent = "Compressed View";
-      previewBadge.classList.add("active");
+      
+      previewBadge.textContent = "Compressed Result";
+      previewBadge.classList.add("active-preview");
     }
 
+    /**
+     * Primary Compression Processing Execution
+     */
     compressBtn.addEventListener('click', async () => {
       if (!pdfDoc || !currentFile) return;
 
       const targetValue = parseFloat(targetSizeInput.value);
       if (!targetValue || targetValue <= 0) {
-        alert('Please enter a valid target size');
+        alert('Please enter a valid target size.');
         return;
       }
 
       const unit = unitSelect.value;
       const targetSizeBytes = Math.floor(unit === 'MB' ? targetValue * 1024 * 1024 : targetValue * 1024);
 
-      // ERROR RULE: File size target must be smaller than original file size
+      // Validation Rule: Target size must be smaller than original file size
       if (targetSizeBytes >= currentFile.size) {
-        alert(`Error: Target size (${formatBytes(targetSizeBytes)}) original file size (${formatBytes(currentFile.size)}) se chhota hona chahiye! Aap file size badha nahi sakte.`);
-        statusText.textContent = 'Error: Target size must be smaller than original file size';
+        alert(`Target size (${formatBytes(targetSizeBytes)}) original size (${formatBytes(currentFile.size)}) se chhota hona chahiye! Over-compression permitted nahi hai.`);
+        statusText.textContent = 'Error: Target size must be smaller than original file size.';
         return;
       }
 
       compressBtn.disabled = true;
-      statusText.textContent = 'Optimizing and matching target size...';
+      statusText.textContent = 'Optimizing PDF image streams & quality...';
 
       try {
         let bestResult = null;
-        const scales = [2.0, 1.75, 1.5, 1.25, 1.0, 0.85, 0.7, 0.55, 0.4, 0.25];
+        
+        // Quality preservation scales (Keeping viewport resolution crisp)
+        const scales = [2.0, 1.8, 1.6, 1.4];
 
         for (let scale of scales) {
-          let minQ = 0.10;
+          let minQ = 0.25;
           let maxQ = 0.98;
           let scaleBest = null;
 
-          for (let i = 0; i < 6; i++) {
+          // Precision Binary Search for optimum quality matching target
+          for (let i = 0; i < 7; i++) {
             let midQ = (minQ + maxQ) / 2;
-            let res = await generatePdfWithPreviewData(scale, midQ);
+            let result = await renderAndBuildPdf(scale, midQ);
             
-            if (res.buffer.byteLength <= targetSizeBytes) {
-              scaleBest = res;
-              minQ = midQ; 
+            if (result.buffer.byteLength <= targetSizeBytes) {
+              scaleBest = result;
+              minQ = midQ; // Try higher quality
             } else {
-              maxQ = midQ; 
+              maxQ = midQ; // Target exceeded, reduce compression level
             }
           }
 
           if (scaleBest) {
             bestResult = scaleBest;
-            break; 
+            break; // Found optimum quality match
           }
         }
 
+        // High resolution fallback for aggressive target sizes
         if (!bestResult) {
-          bestResult = await generatePdfWithPreviewData(0.15, 0.10);
+          bestResult = await renderAndBuildPdf(1.2, 0.15);
         }
 
-        // Inject padding to match exact target byte size
+        // Apply byte injection to match exact KB/MB specified
         compressedPdfBlob = injectPaddingToExactSize(bestResult.buffer, targetSizeBytes);
 
-        // Update preview right panel with compressed pages images
+        // Render compressed preview without size shrink issue
         updateCompressedPreview(bestResult.images);
 
         compressedSizeText.textContent = formatBytes(compressedPdfBlob.size);
@@ -696,23 +832,26 @@
         compressBtn.disabled = false;
         compressBtn.textContent = 'Re-Process PDF';
         downloadBtn.style.display = 'flex';
-        statusText.textContent = 'Compression complete! Check compressed preview.';
+        statusText.textContent = 'Compression Complete! High clarity preserved.';
       } catch (err) {
-        console.error(err);
-        statusText.textContent = 'Error processing PDF';
+        console.error("Compression processing error:", err);
+        statusText.textContent = 'Error while compressing PDF.';
         compressBtn.disabled = false;
       }
     });
 
+    /**
+     * File Download Execution Handler
+     */
     downloadBtn.addEventListener('click', () => {
       if (!compressedPdfBlob) return;
       const url = URL.createObjectURL(compressedPdfBlob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = currentFile ? 'resized_' + currentFile.name : 'resized.pdf';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = currentFile ? 'compressed_' + currentFile.name : 'compressed.pdf';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
       URL.revokeObjectURL(url);
     });
   </script>
