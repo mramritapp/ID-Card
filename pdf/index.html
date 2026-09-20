@@ -150,7 +150,7 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 24px 16px;
+      padding: 28px 16px;
       border: 2px dashed rgba(255, 111, 165, 0.4);
       border-radius: 12px;
       background: rgba(255, 255, 255, 0.02);
@@ -372,15 +372,6 @@
         <input type="range" id="marginSlider" class="slider-input" min="0" max="100" value="15">
       </div>
 
-      <!-- File Size Compression Controls -->
-      <div class="input-group">
-        <label>
-          <span>Image Quality (Compression)</span>
-          <span id="qualityVal">40% (Low MB)</span>
-        </label>
-        <input type="range" id="qualitySlider" class="slider-input" min="10" max="100" value="40">
-      </div>
-
       <button class="btn" id="generatePdfBtn">Download PDF</button>
     </div>
 
@@ -405,8 +396,6 @@
     const marginGroup = document.getElementById('marginGroup');
     const marginSlider = document.getElementById('marginSlider');
     const marginVal = document.getElementById('marginVal');
-    const qualitySlider = document.getElementById('qualitySlider');
-    const qualityVal = document.getElementById('qualityVal');
     const generatePdfBtn = document.getElementById('generatePdfBtn');
     const previewContainer = document.getElementById('previewContainer');
 
@@ -425,17 +414,6 @@
     marginSlider.addEventListener('input', (e) => {
       marginVal.innerText = `${e.target.value} px`;
       applyMarginPreview();
-    });
-
-    qualitySlider.addEventListener('input', (e) => {
-      const val = e.target.value;
-      if (val < 40) {
-        qualityVal.innerText = `${val}% (Ultra Small)`;
-      } else if (val < 70) {
-        qualityVal.innerText = `${val}% (Low MB - Recommended)`;
-      } else {
-        qualityVal.innerText = `${val}% (High Quality/Large MB)`;
-      }
     });
 
     function applyMarginPreview() {
@@ -538,12 +516,12 @@
       renderGrid();
     };
 
-    // Helper: Compress Image to Canvas with Max Width Limit & JPEG Compression
-    function compressImage(imgObj, qualityFactor) {
+    // Smart Auto-Compress Function
+    function autoCompressImage(imgObj) {
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
 
-      // Max width threshold to avoid huge resolutions like 4K/8K
+      // Optimal Max Dimensions for Crisp Display + Small File Size
       const MAX_WIDTH = 1200;
       let width = imgObj.width;
       let height = imgObj.height;
@@ -556,34 +534,34 @@
       canvas.width = width;
       canvas.height = height;
 
-      // Fill white background for transparent PNGs
+      // Ensure crisp white background for transparent/scanned images
       ctx.fillStyle = '#FFFFFF';
       ctx.fillRect(0, 0, width, height);
 
       ctx.drawImage(imgObj.rawImg, 0, 0, width, height);
 
+      // Auto-balanced JPEG Compression (0.45 = Excellent clarity with 90%+ size reduction)
       return {
-        compressedDataUrl: canvas.toDataURL('image/jpeg', qualityFactor),
+        compressedDataUrl: canvas.toDataURL('image/jpeg', 0.45),
         width: width,
         height: height
       };
     }
 
-    // Export Compressed PDF
+    // Export Smart-Compressed PDF
     generatePdfBtn.addEventListener('click', () => {
       if (imageList.length === 0) {
         alert('Please upload at least one image!');
         return;
       }
 
-      generatePdfBtn.innerText = 'Compressing & Downloading...';
+      generatePdfBtn.innerText = 'Creating PDF...';
       generatePdfBtn.disabled = true;
 
       setTimeout(() => {
         const { jsPDF } = window.jspdf;
         const mode = pdfModeSelect.value;
         const margin = mode === 'margin' ? parseInt(marginSlider.value) : 0;
-        const quality = parseInt(qualitySlider.value) / 100; // e.g. 0.40
         
         let filename = fileNameInput.value.trim() || 'Document.pdf';
         if (!filename.endsWith('.pdf')) filename += '.pdf';
@@ -591,7 +569,7 @@
         let pdf = null;
 
         imageList.forEach((item, idx) => {
-          const compressed = compressImage(item, quality);
+          const compressed = autoCompressImage(item);
           
           const totalWidth = compressed.width + (margin * 2);
           const totalHeight = compressed.height + (margin * 2);
