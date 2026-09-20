@@ -177,6 +177,8 @@
     .input-group label {
       font-size: 0.82rem;
       color: var(--text-muted);
+      display: flex;
+      justify-content: space-between;
     }
     .text-input, select {
       width: 100%;
@@ -187,6 +189,12 @@
       color: #fff;
       font-size: 0.9rem;
       outline: none;
+    }
+
+    .slider-input {
+      width: 100%;
+      accent-color: var(--accent);
+      cursor: pointer;
     }
 
     .btn {
@@ -213,7 +221,6 @@
       min-height: 0;
     }
 
-    /* Grid Gallery Preview (Matching User Screenshot Layout) */
     .preview-grid-container {
       width: 100%;
       flex: 1;
@@ -255,9 +262,11 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      background: #f0f2f5;
+      background: #e0e0e0;
       border-radius: 6px;
       overflow: hidden;
+      box-sizing: border-box;
+      transition: padding 0.1s ease;
     }
 
     .image-frame img {
@@ -265,6 +274,7 @@
       max-height: 100%;
       object-fit: contain;
       pointer-events: none;
+      background: #fff;
     }
 
     .card-footer {
@@ -331,9 +341,9 @@
 
   <div class="main-container">
     
-    <!-- Control Left Panel -->
+    <!-- Control Panel -->
     <div class="glass-panel left-panel">
-      <div class="panel-heading">Upload Options</div>
+      <div class="panel-heading">Upload & Settings</div>
 
       <div class="file-input-wrapper">
         <div style="font-size:0.9rem; font-weight:500;" id="uploadMsg">+ Select or Drop Images</div>
@@ -346,21 +356,29 @@
       </div>
 
       <div class="input-group">
-        <label>Page Orientation / Size</label>
-        <select id="orientationSelect">
-          <option value="original" selected>Original (Image Size - Unchanged)</option>
-          <option value="p">A4 Portrait</option>
-          <option value="l">A4 Landscape</option>
+        <label>PDF Option</label>
+        <select id="pdfModeSelect">
+          <option value="original" selected>Original Image Size</option>
+          <option value="margin">Custom Margin Size</option>
         </select>
+      </div>
+
+      <!-- Margin Controls (Shows only when Custom Margin is selected) -->
+      <div class="input-group" id="marginGroup" style="display: none;">
+        <label>
+          <span>Page Margin</span>
+          <span id="marginVal">15 px</span>
+        </label>
+        <input type="range" id="marginSlider" class="slider-input" min="0" max="100" value="15">
       </div>
 
       <button class="btn" id="generatePdfBtn">Download PDF</button>
     </div>
 
-    <!-- Right Preview Panel (Grid Layout with Drag & Drop) -->
+    <!-- Right Preview Panel (Grid Gallery) -->
     <div class="glass-panel preview-panel">
       <div style="display: flex; justify-content: space-between; align-items: center;">
-        <div class="panel-heading">Image Gallery Preview</div>
+        <div class="panel-heading">Image Preview</div>
         <div style="font-size: 0.75rem; color: var(--text-muted);">Drag photos to reorder</div>
       </div>
       
@@ -374,14 +392,40 @@
   <script>
     const imageInput = document.getElementById('imageInput');
     const fileNameInput = document.getElementById('fileNameInput');
-    const orientationSelect = document.getElementById('orientationSelect');
+    const pdfModeSelect = document.getElementById('pdfModeSelect');
+    const marginGroup = document.getElementById('marginGroup');
+    const marginSlider = document.getElementById('marginSlider');
+    const marginVal = document.getElementById('marginVal');
     const generatePdfBtn = document.getElementById('generatePdfBtn');
     const previewContainer = document.getElementById('previewContainer');
 
-    // Array to store image objects: { id, dataUrl, name, width, height }
     let imageList = [];
     let draggedIndex = null;
 
+    // Toggle Margin Slider UI
+    pdfModeSelect.addEventListener('change', () => {
+      if (pdfModeSelect.value === 'margin') {
+        marginGroup.style.display = 'flex';
+      } else {
+        marginGroup.style.display = 'none';
+      }
+      applyMarginPreview();
+    });
+
+    marginSlider.addEventListener('input', (e) => {
+      marginVal.innerText = `${e.target.value} px`;
+      applyMarginPreview();
+    });
+
+    function applyMarginPreview() {
+      const margin = pdfModeSelect.value === 'margin' ? parseInt(marginSlider.value) / 3 : 0;
+      const frames = document.querySelectorAll('.image-frame');
+      frames.forEach(frame => {
+        frame.style.padding = `${margin}px`;
+      });
+    }
+
+    // Upload Handler
     imageInput.addEventListener('change', (e) => {
       const files = Array.from(e.target.files);
       let loadedCount = 0;
@@ -400,7 +444,7 @@
                 height: img.naturalHeight
               });
               loadedCount++;
-              if (loadedCount === files.length || imageList.length === files.length) {
+              if (loadedCount === files.length) {
                 renderGrid();
               }
             };
@@ -420,6 +464,8 @@
         return;
       }
 
+      const currentPadding = pdfModeSelect.value === 'margin' ? parseInt(marginSlider.value) / 3 : 0;
+
       imageList.forEach((item, index) => {
         const card = document.createElement('div');
         card.className = 'grid-card';
@@ -427,7 +473,7 @@
         card.dataset.index = index;
 
         card.innerHTML = `
-          <div class="image-frame">
+          <div class="image-frame" style="padding: ${currentPadding}px;">
             <img src="${item.dataUrl}" alt="${item.name}">
           </div>
           <div class="card-footer">
@@ -436,7 +482,7 @@
           </div>
         `;
 
-        // Drag & Drop Events
+        // Drag & Drop Reorder Events
         card.addEventListener('dragstart', (e) => {
           draggedIndex = index;
           card.classList.add('dragging');
@@ -472,7 +518,7 @@
       renderGrid();
     };
 
-    // Generate PDF Logic
+    // Export PDF
     generatePdfBtn.addEventListener('click', () => {
       if (imageList.length === 0) {
         alert('Please upload at least one image!');
@@ -480,38 +526,30 @@
       }
 
       const { jsPDF } = window.jspdf;
-      const option = orientationSelect.value;
+      const mode = pdfModeSelect.value;
+      const margin = mode === 'margin' ? parseInt(marginSlider.value) : 0;
+      
       let filename = fileNameInput.value.trim() || 'Document.pdf';
       if (!filename.endsWith('.pdf')) filename += '.pdf';
 
       let pdf = null;
 
       imageList.forEach((item, idx) => {
-        if (option === 'original') {
-          // Original size of image without modification
-          const orientation = item.width > item.height ? 'l' : 'p';
-          if (idx === 0) {
-            pdf = new jsPDF({
-              orientation: orientation,
-              unit: 'px',
-              format: [item.width, item.height]
-            });
-          } else {
-            pdf.addPage([item.width, item.height], orientation);
-          }
-          pdf.addImage(item.dataUrl, 'JPEG', 0, 0, item.width, item.height);
-        } else {
-          // Standard A4 Fit Page Mode
-          if (idx === 0) {
-            pdf = new jsPDF(option, 'pt', 'a4');
-          } else {
-            pdf.addPage('a4', option);
-          }
-          const pageWidth = pdf.internal.pageSize.getWidth();
-          const pageHeight = pdf.internal.pageSize.getHeight();
+        const totalWidth = item.width + (margin * 2);
+        const totalHeight = item.height + (margin * 2);
+        const orientation = totalWidth > totalHeight ? 'l' : 'p';
 
-          pdf.addImage(item.dataUrl, 'JPEG', 0, 0, pageWidth, pageHeight);
+        if (idx === 0) {
+          pdf = new jsPDF({
+            orientation: orientation,
+            unit: 'px',
+            format: [totalWidth, totalHeight]
+          });
+        } else {
+          pdf.addPage([totalWidth, totalHeight], orientation);
         }
+
+        pdf.addImage(item.dataUrl, 'JPEG', margin, margin, item.width, item.height);
       });
 
       pdf.save(filename);
