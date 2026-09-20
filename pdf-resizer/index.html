@@ -348,7 +348,6 @@
       text-align: center;
     }
 
-    /* Mobile / Small Screen Responsive Rules */
     @media (max-height: 700px), (max-width: 860px) {
       html, body {
         overflow: auto;
@@ -382,7 +381,7 @@
     
     <!-- Controls Left Panel -->
     <div class="glass-panel">
-      <div class="panel-heading">Upload & Compress</div>
+      <div class="panel-heading">Upload & Resize</div>
 
       <!-- File Upload Area -->
       <div class="file-input-wrapper">
@@ -395,7 +394,7 @@
 
       <!-- Target Size Input -->
       <div class="input-group">
-        <label>Target Maximum File Size</label>
+        <label>Exact Target File Size</label>
         <div class="target-size-row">
           <input type="number" id="targetSizeInput" class="text-input" placeholder="e.g. 200" value="200" min="1">
           <select id="unitSelect" class="unit-select">
@@ -416,14 +415,14 @@
           <span class="info-val" id="pageCountText">-</span>
         </div>
         <div class="info-item" id="resultRow" style="display: none;">
-          <span class="info-label" style="color: var(--accent);">Resized Size:</span>
+          <span class="info-label" style="color: var(--accent);">Final Size:</span>
           <span class="info-val" id="compressedSizeText" style="color: var(--accent);">-</span>
         </div>
       </div>
 
       <!-- Action Buttons -->
       <div class="btn-container">
-        <button class="btn btn-primary" id="compressBtn" disabled>Compress PDF</button>
+        <button class="btn btn-primary" id="compressBtn" disabled>Process PDF</button>
         <button class="btn btn-success" id="downloadBtn" style="display: none;">Download PDF</button>
       </div>
 
@@ -443,7 +442,6 @@
     // Initialize PDF.js worker
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
-    // DOM Elements
     const pdfFileInput = document.getElementById('pdfFileInput');
     const uploadText = document.getElementById('uploadText');
     const targetSizeInput = document.getElementById('targetSizeInput');
@@ -462,7 +460,6 @@
     let pdfDoc = null;
     let compressedPdfBlob = null;
 
-    // Helper: Format bytes to human readable string
     function formatBytes(bytes) {
       if (bytes === 0) return '0 Bytes';
       const k = 1024;
@@ -471,7 +468,6 @@
       return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
     }
 
-    // PDF File Select Event
     pdfFileInput.addEventListener('change', async (e) => {
       const file = e.target.files[0];
       if (!file || file.type !== 'application/pdf') return;
@@ -483,7 +479,7 @@
       resultRow.style.display = 'none';
       downloadBtn.style.display = 'none';
       compressBtn.disabled = true;
-      compressBtn.textContent = 'Compress PDF';
+      compressBtn.textContent = 'Process PDF';
       statusText.textContent = 'Loading PDF preview...';
 
       try {
@@ -491,7 +487,6 @@
         pdfDoc = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
         pageCountText.textContent = pdfDoc.numPages;
 
-        // Render preview pages
         previewArea.innerHTML = '';
         for (let pageNum = 1; pageNum <= Math.min(pdfDoc.numPages, 5); pageNum++) {
           const page = await pdfDoc.getPage(pageNum);
@@ -511,15 +506,14 @@
         }
 
         compressBtn.disabled = false;
-        statusText.textContent = 'Ready to compress';
+        statusText.textContent = 'Ready to process';
       } catch (err) {
         console.error(err);
         statusText.textContent = 'Failed to load PDF file';
       }
     });
 
-    // Helper to generate PDF with controlled scale and quality
-    async function generatePdfAtQuality(scale, quality) {
+    async function generateRawPdf(scale, quality) {
       const { jsPDF } = window.jspdf;
       let newPdf = null;
 
@@ -532,7 +526,6 @@
         canvas.height = viewport.height;
         const ctx = canvas.getContext('2d', { alpha: false });
 
-        // High quality rendering context
         ctx.imageSmoothingEnabled = true;
         ctx.imageSmoothingQuality = 'high';
 
@@ -554,10 +547,40 @@
         newPdf.addImage(imgData, 'JPEG', 0, 0, viewport.width, viewport.height, undefined, 'FAST');
       }
 
-      return newPdf.output('blob');
+      return newPdf.output('arraybuffer');
     }
 
-    // Compress Button Click Handler
+    // PDF Byte Injector Logic to force exact size
+    function injectPaddingToExactSize(pdfArrayBuffer, targetSizeBytes) {
+      const currentSize = pdfArrayBuffer.byteLength;
+      
+      // If compressed PDF is already bigger than target, return as is
+      if (currentSize >= targetSizeBytes) {
+        return new Blob([pdfArrayBuffer], { type: 'application/pdf' });
+      }
+
+      const diff = targetSizeBytes - currentSize;
+      
+      // Create PDF Comment Padding (% Extra bytes...)
+      const prefix = "\n%PADDING-START\n%";
+      const suffix = "\n%PADDING-END\n";
+      const headerLength = prefix.length + suffix.length;
+
+      let paddingByteCount = diff - headerLength;
+      if (paddingByteCount < 0) paddingByteCount = 0;
+
+      const paddingString = prefix + "0".repeat(paddingByteCount) + suffix;
+      const paddingEncoder = new TextEncoder();
+      const paddingBytes = paddingEncoder.encode(paddingString);
+
+      // Merge Original PDF with injected comment padding
+      const finalBuffer = new Uint8Array(pdfArrayBuffer.byteLength + paddingBytes.byteLength);
+      finalBuffer.set(new Uint8Array(pdfArrayBuffer), 0);
+      finalBuffer.set(paddingBytes, pdfArrayBuffer.byteLength);
+
+      return new Blob([finalBuffer], { type: 'application/pdf' });
+    }
+
     compressBtn.addEventListener('click', async () => {
       if (!pdfDoc || !currentFile) return;
 
@@ -568,97 +591,69 @@
       }
 
       const unit = unitSelect.value;
-      const targetSizeBytes = unit === 'MB' ? targetValue * 1024 * 1024 : targetValue * 1024;
-
-      if (targetSizeBytes >= currentFile.size) {
-        alert('Target size should be smaller than original file size (' + formatBytes(currentFile.size) + ')');
-        return;
-      }
+      const targetSizeBytes = Math.floor(unit === 'MB' ? targetValue * 1024 * 1024 : targetValue * 1024);
 
       compressBtn.disabled = true;
-      statusText.textContent = 'Calculating optimal compression...';
+      statusText.textContent = 'Optimizing and matching target size...';
 
       try {
-        let bestBlob = null;
+        let bestArrayBuffer = null;
         
-        // Fine-tuned multi-tier scales to prevent massive drop in file size
-        const scales = [2.0, 1.75, 1.5, 1.25, 1.0, 0.85, 0.7, 0.55, 0.4, 0.25, 0.15];
+        // Multi-tier Scales to maintain best quality possible under or near target size
+        const scales = [2.0, 1.75, 1.5, 1.25, 1.0, 0.85, 0.7, 0.55, 0.4, 0.25];
 
         for (let scale of scales) {
-          // Check if maximum quality at this scale is within target
-          let testBlob = await generatePdfAtQuality(scale, 0.95);
-          
-          if (testBlob.size <= targetSizeBytes) {
-            // Found a good scale where max quality fits or is very close
-            bestBlob = testBlob;
+          // Binary Search for quality at this scale
+          let minQ = 0.10;
+          let maxQ = 0.98;
+          let scaleBestBuffer = null;
+
+          for (let i = 0; i < 6; i++) {
+            let midQ = (minQ + maxQ) / 2;
+            let testBuffer = await generateRawPdf(scale, midQ);
             
-            // Binary search to get as close to target as possible (maximizing quality)
-            let minQ = 0.60;
-            let maxQ = 0.98;
-            
-            for (let i = 0; i < 5; i++) {
-              let midQ = (minQ + maxQ) / 2;
-              let currentBlob = await generatePdfAtQuality(scale, midQ);
-              
-              if (currentBlob.size <= targetSizeBytes) {
-                bestBlob = currentBlob;
-                minQ = midQ; // try higher quality to reach closer to target
-              } else {
-                maxQ = midQ; // target exceeded, reduce quality
-              }
+            if (testBuffer.byteLength <= targetSizeBytes) {
+              scaleBestBuffer = testBuffer;
+              minQ = midQ; // Try higher quality
+            } else {
+              maxQ = midQ; // Scale/Quality is too big, lower quality
             }
-            break; // Stop scale loop since target size was achieved with highest resolution possible
-          } else {
-            // Check lower quality bound at current scale before abandoning scale
-            let minQualityBlob = await generatePdfAtQuality(scale, 0.20);
-            if (minQualityBlob.size <= targetSizeBytes) {
-              // Binary search between 0.20 and 0.95
-              let minQ = 0.20;
-              let maxQ = 0.95;
-              
-              for (let i = 0; i < 6; i++) {
-                let midQ = (minQ + maxQ) / 2;
-                let currentBlob = await generatePdfAtQuality(scale, midQ);
-                
-                if (currentBlob.size <= targetSizeBytes) {
-                  bestBlob = currentBlob;
-                  minQ = midQ;
-                } else {
-                  maxQ = midQ;
-                }
-              }
-              break;
-            }
+          }
+
+          if (scaleBestBuffer) {
+            bestArrayBuffer = scaleBestBuffer;
+            break; // Found the highest scale that fits within target!
           }
         }
 
-        // Fallback for extremely small sizes
-        if (!bestBlob) {
-          bestBlob = await generatePdfAtQuality(0.1, 0.1);
+        // Fallback for extremely low target sizes
+        if (!bestArrayBuffer) {
+          bestArrayBuffer = await generateRawPdf(0.15, 0.10);
         }
 
-        compressedPdfBlob = bestBlob;
-        compressedSizeText.textContent = formatBytes(bestBlob.size);
+        // Step 2: Inject Byte Padding to hit EXACT KB/MB Target Requested
+        compressedPdfBlob = injectPaddingToExactSize(bestArrayBuffer, targetSizeBytes);
+
+        compressedSizeText.textContent = formatBytes(compressedPdfBlob.size);
         resultRow.style.display = 'flex';
 
         compressBtn.disabled = false;
-        compressBtn.textContent = 'Re-Compress PDF';
+        compressBtn.textContent = 'Re-Process PDF';
         downloadBtn.style.display = 'flex';
-        statusText.textContent = 'Compression complete!';
+        statusText.textContent = 'Matching & Padding Complete!';
       } catch (err) {
         console.error(err);
-        statusText.textContent = 'Error compressing PDF';
+        statusText.textContent = 'Error processing PDF';
         compressBtn.disabled = false;
       }
     });
 
-    // Download Button Click
     downloadBtn.addEventListener('click', () => {
       if (!compressedPdfBlob) return;
       const url = URL.createObjectURL(compressedPdfBlob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = currentFile ? 'compressed_' + currentFile.name : 'compressed.pdf';
+      a.download = currentFile ? 'resized_' + currentFile.name : 'resized.pdf';
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
