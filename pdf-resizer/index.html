@@ -192,6 +192,7 @@
     .upload-text {
       font-size: 0.9rem;
       font-weight: 500;
+      word-break: break-all;
     }
 
     /* Form Inputs */
@@ -261,6 +262,11 @@
     }
 
     /* Buttons */
+    .btn-container {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
     .btn {
       width: 100%;
       padding: 12px;
@@ -282,6 +288,14 @@
     .btn-primary:hover:not(:disabled) {
       background: var(--accent-hover);
       box-shadow: 0 0 15px rgba(255, 111, 165, 0.4);
+    }
+    .btn-success {
+      background: #4FD98A;
+      color: #0B0E17;
+    }
+    .btn-success:hover:not(:disabled) {
+      background: #3ec478;
+      box-shadow: 0 0 15px rgba(79, 217, 138, 0.4);
     }
     .btn:disabled {
       opacity: 0.4;
@@ -381,7 +395,7 @@
 
       <!-- Target Size Input -->
       <div class="input-group">
-        <label>Target File Size</label>
+        <label>Target Maximum File Size</label>
         <div class="target-size-row">
           <input type="number" id="targetSizeInput" class="text-input" placeholder="e.g. 200" value="200" min="1">
           <select id="unitSelect" class="unit-select">
@@ -408,8 +422,10 @@
       </div>
 
       <!-- Action Buttons -->
-      <button class="btn btn-primary" id="compressBtn" disabled>Compress PDF</button>
-      <button class="btn btn-primary" id="downloadBtn" style="display: none; background: #4FD98A; color: #0B0E17;">Download PDF</button>
+      <div class="btn-container">
+        <button class="btn btn-primary" id="compressBtn" disabled>Compress PDF</button>
+        <button class="btn btn-success" id="downloadBtn" style="display: none;">Download PDF</button>
+      </div>
 
       <div class="status-text" id="statusText">Upload a PDF to get started</div>
     </div>
@@ -466,7 +482,6 @@
       infoBox.style.display = 'flex';
       resultRow.style.display = 'none';
       downloadBtn.style.display = 'none';
-      compressBtn.style.display = 'flex';
       compressBtn.disabled = true;
       statusText.textContent = 'Loading PDF preview...';
 
@@ -502,7 +517,42 @@
       }
     });
 
-    // Compression Handler
+    // Compression Logic (Generates PDF matching scale & quality)
+    async function generatePdfAtQuality(scale, quality) {
+      const { jsPDF } = window.jspdf;
+      let newPdf = null;
+
+      for (let pageNum = 1; pageNum <= pdfDoc.numPages; pageNum++) {
+        const page = await pdfDoc.getPage(pageNum);
+        const viewport = page.getViewport({ scale: scale });
+
+        const canvas = document.createElement('canvas');
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+        const ctx = canvas.getContext('2d');
+
+        await page.render({ canvasContext: ctx, viewport: viewport }).promise;
+
+        const imgData = canvas.toDataURL('image/jpeg', quality);
+        const orientation = viewport.width > viewport.height ? 'l' : 'p';
+
+        if (!newPdf) {
+          newPdf = new jsPDF({
+            orientation: orientation,
+            unit: 'px',
+            format: [viewport.width, viewport.height]
+          });
+        } else {
+          newPdf.addPage([viewport.width, viewport.height], orientation);
+        }
+
+        newPdf.addImage(imgData, 'JPEG', 0, 0, viewport.width, viewport.height);
+      }
+
+      return newPdf.output('blob');
+    }
+
+    // Compress Button Click Handler
     compressBtn.addEventListener('click', async () => {
       if (!pdfDoc || !currentFile) return;
 
@@ -516,73 +566,68 @@
       const targetSizeBytes = unit === 'MB' ? targetValue * 1024 * 1024 : targetValue * 1024;
 
       compressBtn.disabled = true;
-      statusText.textContent = 'Compressing PDF pages...';
+      statusText.textContent = 'Compressing PDF to target size...';
 
       try {
-        const { jsPDF } = window.jspdf;
-        let quality = 0.65;
-        let scale = 1.2;
+        let bestBlob = null;
 
-        // Estimate parameters based on size target
-        if (targetSizeBytes < currentFile.size * 0.3) {
-          quality = 0.35;
-          scale = 0.9;
-        } else if (targetSizeBytes < currentFile.size * 0.6) {
-          quality = 0.55;
-          scale = 1.0;
+        // Dynamic base scale depending on how small target is
+        let scaleSteps = [1.2, 1.0, 0.8, 0.6, 0.4, 0.2, 0.1];
+        if (targetSizeBytes < 50 * 1024) {
+          scaleSteps = [0.5, 0.3, 0.2, 0.1, 0.05];
         }
 
-        let newPdf = null;
-        let resultBlob = null;
+        let matched = false;
 
-        // Iterative compression to match target size closely
-        for (let attempt = 0; attempt < 3; attempt++) {
-          newPdf = null;
-
-          for (let pageNum = 1; pageNum <= pdfDoc.numPages; pageNum++) {
-            const page = await pdfDoc.getPage(pageNum);
-            const viewport = page.getViewport({ scale: scale });
-
-            const canvas = document.createElement('canvas');
-            canvas.width = viewport.width;
-            canvas.height = viewport.height;
-            const ctx = canvas.getContext('2d');
-
-            await page.render({ canvasContext: ctx, viewport: viewport }).promise;
-
-            const imgData = canvas.toDataURL('image/jpeg', quality);
-            const orientation = viewport.width > viewport.height ? 'l' : 'p';
-
-            if (!newPdf) {
-              newPdf = new jsPDF({
-                orientation: orientation,
-                unit: 'px',
-                format: [viewport.width, viewport.height]
-              });
-            } else {
-              newPdf.addPage([viewport.width, viewport.height], orientation);
-            }
-
-            newPdf.addImage(imgData, 'JPEG', 0, 0, viewport.width, viewport.height);
-          }
-
-          resultBlob = newPdf.output('blob');
-
-          // If blob is close to target or smaller, break
-          if (resultBlob.size <= targetSizeBytes || quality <= 0.2) {
+        for (let scale of scaleSteps) {
+          let lowQ = 0.02;
+          let highQ = 0.92;
+          
+          // Try highest quality at current scale
+          let testBlob = await generatePdfAtQuality(scale, highQ);
+          if (testBlob.size <= targetSizeBytes) {
+            bestBlob = testBlob;
+            matched = true;
             break;
           }
 
-          // Adjust quality/scale for next iteration
-          quality = Math.max(0.15, quality - 0.2);
-          scale = Math.max(0.7, scale - 0.15);
+          // If lowest quality at current scale is still larger than target, downscale further
+          let minBlob = await generatePdfAtQuality(scale, lowQ);
+          if (minBlob.size > targetSizeBytes) {
+            bestBlob = minBlob; // Keep as fallback
+            continue;
+          }
+
+          // Binary Search for quality setting
+          for (let i = 0; i < 4; i++) {
+            let midQ = (lowQ + highQ) / 2;
+            let currentBlob = await generatePdfAtQuality(scale, midQ);
+
+            if (currentBlob.size <= targetSizeBytes) {
+              bestBlob = currentBlob;
+              lowQ = midQ; // try higher quality
+            } else {
+              highQ = midQ; // reduce quality
+            }
+          }
+
+          if (bestBlob && bestBlob.size <= targetSizeBytes) {
+            matched = true;
+            break;
+          }
         }
 
-        compressedPdfBlob = resultBlob;
-        compressedSizeText.textContent = formatBytes(resultBlob.size);
+        if (!bestBlob) {
+          bestBlob = await generatePdfAtQuality(0.1, 0.01);
+        }
+
+        compressedPdfBlob = bestBlob;
+        compressedSizeText.textContent = formatBytes(bestBlob.size);
         resultRow.style.display = 'flex';
 
-        compressBtn.style.display = 'none';
+        // Keep compress button visible so user can re-compress if needed
+        compressBtn.disabled = false;
+        compressBtn.textContent = 'Re-Compress PDF';
         downloadBtn.style.display = 'flex';
         statusText.textContent = 'Compression complete!';
       } catch (err) {
