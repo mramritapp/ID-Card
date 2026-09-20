@@ -516,13 +516,13 @@
       renderGrid();
     };
 
-    // Mild Compression (3x less aggressive compression for higher quality)
+    // Optimal Balance: High Quality + Low KB
     function autoCompressImage(imgObj) {
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
 
-      // Increased resolution limit (2000px width max to preserve sharp text & detail)
-      const MAX_WIDTH = 2000;
+      // Max width to keep text clear while reducing unnecessary pixels
+      const MAX_WIDTH = 1800;
       let width = imgObj.width;
       let height = imgObj.height;
 
@@ -539,9 +539,9 @@
 
       ctx.drawImage(imgObj.rawImg, 0, 0, width, height);
 
-      // Higher Quality Factor (0.80 = High quality with balanced size)
+      // 0.65 quality gives high clarity with very low file size (KB)
       return {
-        compressedDataUrl: canvas.toDataURL('image/jpeg', 0.80),
+        compressedDataUrl: canvas.toDataURL('image/jpeg', 0.65),
         width: width,
         height: height
       };
