@@ -204,10 +204,9 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      transform-origin: top left;
+      transform-origin: center center;
     }
 
-    /* Clean Image Style (No Boundary/Border) */
     .id-card-img {
       object-fit: fill;
       border: none !important;
@@ -216,7 +215,7 @@
       background: transparent;
     }
 
-    /* Cropper Red Styling Overlay */
+    /* Cropper Overlay Styling */
     .modal {
       position: fixed;
       top: 0; left: 0; width: 100vw; height: 100vh;
@@ -299,13 +298,13 @@
       </div>
 
       <div class="control-group">
-        <label><span>Move Horizontal (X)</span><span id="posXVal">15 mm</span></label>
-        <input type="range" id="posXSlider" min="0" max="150" value="15">
+        <label><span>Move Horizontal (X)</span><span id="posXVal">0 mm</span></label>
+        <input type="range" id="posXSlider" min="-100" max="100" value="0">
       </div>
 
       <div class="control-group">
-        <label><span>Move Vertical (Y)</span><span id="posYVal">20 mm</span></label>
-        <input type="range" id="posYSlider" min="0" max="200" value="20">
+        <label><span>Move Vertical (Y)</span><span id="posYVal">0 mm</span></label>
+        <input type="range" id="posYSlider" min="-100" max="100" value="0">
       </div>
 
       <button class="btn btn-reset" id="resetBtn">Reset Settings</button>
@@ -369,7 +368,7 @@
     let cropper = null;
     let activeSide = null;
 
-    // Standard ID Card Size (85.6mm x 53.98mm)
+    // Standard ID Card Size (85.6mm x 54mm)
     const CARD_WIDTH_MM = 85.6;
     const CARD_HEIGHT_MM = 54;
 
@@ -383,13 +382,16 @@
         
         if (cropper) cropper.destroy();
         cropper = new Cropper(cropperImage, {
-          viewMode: 0,
-          freeRatio: true,
-          autoCropArea: 1,
+          viewMode: 1,
+          dragMode: 'none', // Disables click-and-drag to make new box
+          autoCropArea: 0.95,
           responsive: true,
           guides: true,
           center: true,
-          highlight: true
+          highlight: false,
+          cropBoxMovable: true,
+          cropBoxResizable: true,
+          toggleDragModeOnDblclick: false
         });
       };
       reader.readAsDataURL(file);
@@ -440,12 +442,10 @@
       posXVal.innerText = `${posX} mm`;
       posYVal.innerText = `${posY} mm`;
 
-      const pxFactor = 380 / 210; // A4 Web Scale Factor
+      const pxFactor = 380 / 210; // A4 Scale Ratio (380px = 210mm)
 
       cardsWrapper.style.flexDirection = isTopDown ? 'column' : 'row';
       cardsWrapper.style.gap = `${gap * pxFactor}px`;
-      cardsWrapper.style.left = `${posX * pxFactor}px`;
-      cardsWrapper.style.top = `${posY * pxFactor}px`;
 
       const cardPxWidth = CARD_WIDTH_MM * pxFactor;
       const cardPxHeight = CARD_HEIGHT_MM * pxFactor;
@@ -454,14 +454,25 @@
         img.style.width = `${cardPxWidth}px`;
         img.style.height = `${cardPxHeight}px`;
       });
+
+      // Calculate Perfect Center of A4 Page (380px x 537px)
+      const wrapperWidth = isTopDown ? cardPxWidth : (cardPxWidth * 2 + gap * pxFactor);
+      const wrapperHeight = isTopDown ? (cardPxHeight * 2 + gap * pxFactor) : cardPxHeight;
+
+      const centerX = (380 - wrapperWidth) / 2;
+      const centerY = (537 - wrapperHeight) / 2;
+
+      // Apply Offset X and Y relative to exact center
+      cardsWrapper.style.left = `${centerX + (posX * pxFactor)}px`;
+      cardsWrapper.style.top = `${centerY + (posY * pxFactor)}px`;
     }
 
-    // Reset to Default Setup
+    // Reset to Page Center Default Setup
     resetBtn.addEventListener('click', () => {
       layoutSelect.value = 'topdown';
       gapSlider.value = 10;
-      posXSlider.value = 15;
-      posYSlider.value = 20;
+      posXSlider.value = 0;
+      posYSlider.value = 0;
       updateLayout();
     });
 
@@ -469,7 +480,7 @@
       el.addEventListener('input', updateLayout);
     });
 
-    // 0% Compression Ultra-HD Output
+    // 0% Compression Ultra-HD Output Engine
     async function generateA4Canvas() {
       const page = document.getElementById('a4Page');
       return await html2canvas(page, {
