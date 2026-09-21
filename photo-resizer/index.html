@@ -79,6 +79,9 @@
       font-size: 0.8rem;
       font-weight: 500;
       cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
       transition: background 0.2s ease;
     }
     .btn-home:hover {
@@ -343,7 +346,7 @@
   <div class="glow-2"></div>
 
   <header>
-    <button class="btn-home" id="homeBtn">&larr; Home</button>
+    <button class="btn-home" id="btnHome">&larr; Home</button>
     <div class="app-title">JPG <span>Resizer Studio</span></div>
   </header>
 
@@ -406,7 +409,7 @@
   </div>
 
   <script>
-    const homeBtn = document.getElementById('homeBtn');
+    const btnHome = document.getElementById('btnHome');
     const fileInput = document.getElementById('fileInput');
     const fileStatus = document.getElementById('fileStatus');
     const origDetailsCard = document.getElementById('origDetailsCard');
@@ -429,9 +432,9 @@
     let originalSizeBytes = 0;
     let finalCompressedDataUrl = '';
 
-    // Home Button Handler - Page Reload / Reset
-    homeBtn.addEventListener('click', () => {
-      window.location.reload();
+    // Home button action
+    btnHome.addEventListener('click', () => {
+      window.location.href = '/';
     });
 
     function formatBytes(bytes) {
