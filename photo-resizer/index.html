@@ -159,7 +159,6 @@
       color: #FFFFFF;
     }
 
-    /* Left Panel Original Info Card */
     .orig-details-card {
       background: rgba(0, 0, 0, 0.3);
       border: 1px solid var(--panel-border);
@@ -305,7 +304,7 @@
       font-size: 0.85rem;
     }
 
-    .compressed-display {
+    .preview-display {
       display: none;
       align-items: center;
       justify-content: center;
@@ -313,7 +312,7 @@
       height: 100%;
     }
 
-    .compressed-display img {
+    .preview-display img {
       max-width: 100%;
       max-height: calc(100vh - 220px);
       object-fit: contain;
@@ -357,7 +356,7 @@
         <input type="file" id="fileInput" accept="image/*">
       </div>
 
-      <!-- Original Image Details -->
+      <!-- Original Image Details Card -->
       <div class="orig-details-card" id="origDetailsCard">
         <div class="orig-details-title">Original Image Details</div>
         <div class="orig-detail-row">File Name: <span id="origName">-</span></div>
@@ -386,15 +385,15 @@
     <!-- Right Workspace Panel -->
     <div class="right-panel">
       <div class="preview-header">
-        <div class="panel-heading">Compressed Image Preview</div>
-        <div class="badge-view">Result Preview</div>
+        <div class="panel-heading">Image Preview</div>
+        <div class="badge-view" id="previewStateBadge">Original View</div>
       </div>
 
       <div class="preview-container">
-        <div class="placeholder-text" id="placeholderText">Compressed preview will appear here</div>
+        <div class="placeholder-text" id="placeholderText">Image preview will appear here</div>
 
-        <div class="compressed-display" id="compressedDisplay">
-          <img id="compImg" src="" alt="Compressed Preview">
+        <div class="preview-display" id="previewDisplay">
+          <img id="mainPreviewImg" src="" alt="Preview">
         </div>
       </div>
     </div>
@@ -416,8 +415,9 @@
     const statusMsg = document.getElementById('statusMsg');
 
     const placeholderText = document.getElementById('placeholderText');
-    const compressedDisplay = document.getElementById('compressedDisplay');
-    const compImg = document.getElementById('compImg');
+    const previewDisplay = document.getElementById('previewDisplay');
+    const mainPreviewImg = document.getElementById('mainPreviewImg');
+    const previewStateBadge = document.getElementById('previewStateBadge');
 
     let loadedImage = null;
     let originalSizeBytes = 0;
@@ -431,9 +431,32 @@
       return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
     }
 
+    function resetApp() {
+      loadedImage = null;
+      originalSizeBytes = 0;
+      finalCompressedDataUrl = '';
+      
+      targetSize.value = '';
+      sizeUnit.value = 'KB';
+
+      downloadBtn.style.display = 'none';
+      processBtn.disabled = true;
+
+      statusMsg.className = 'status-msg';
+      statusMsg.innerText = '';
+
+      origDetailsCard.style.display = 'none';
+      previewDisplay.style.display = 'none';
+      placeholderText.style.display = 'block';
+      previewStateBadge.innerText = 'Original View';
+    }
+
     fileInput.addEventListener('change', (e) => {
       const file = e.target.files[0];
       if (!file) return;
+
+      // Complete reset when selecting a new file
+      resetApp();
 
       originalSizeBytes = file.size;
       fileStatus.innerText = 'Change Photo';
@@ -448,6 +471,12 @@
           loadedImage = img;
           origDim.innerText = `${img.width} x ${img.height} px`;
           origDetailsCard.style.display = 'flex';
+
+          // Show Original Image Preview directly upon upload
+          mainPreviewImg.src = evt.target.result;
+          placeholderText.style.display = 'none';
+          previewDisplay.style.display = 'flex';
+          previewStateBadge.innerText = 'Original View';
 
           processBtn.disabled = false;
           statusMsg.className = 'status-msg';
@@ -466,7 +495,7 @@
       const userValue = parseFloat(targetSize.value);
       const unit = sizeUnit.value;
 
-      // Validation 1: Blank input
+      // Validation 1: Blank or invalid input
       if (!userValue || userValue <= 0) {
         showError('Please enter a valid target size!');
         return;
@@ -474,7 +503,7 @@
 
       const targetBytes = unit === 'MB' ? userValue * 1024 * 1024 : userValue * 1024;
 
-      // Validation 2: Target size larger than original size
+      // Validation 2: Target size larger than or equal to original size
       if (targetBytes >= originalSizeBytes) {
         showError(`Target size must be smaller than original size (${formatBytes(originalSizeBytes)})!`);
         return;
@@ -488,7 +517,7 @@
       let bestResult = null;
       let scale = 1.0;
 
-      // Binary Search Quality Loop
+      // Compression Binary Loop
       for (let pass = 0; pass < 2; pass++) {
         minQuality = 0.01;
         maxQuality = 0.98;
@@ -514,10 +543,10 @@
       }
 
       finalCompressedDataUrl = bestResult.dataUrl;
-      compImg.src = finalCompressedDataUrl;
 
-      placeholderText.style.display = 'none';
-      compressedDisplay.style.display = 'flex';
+      // Update Preview with Compressed Result
+      mainPreviewImg.src = finalCompressedDataUrl;
+      previewStateBadge.innerText = 'Compressed View';
 
       showSuccess(`Compressed under ${userValue} ${unit}!`);
       downloadBtn.style.display = 'block';
