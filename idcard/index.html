@@ -3,30 +3,30 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Professional ID Card Maker - Cyber Cafe Tools</title>
+  <title>A4 ID Card Print Layout Studio</title>
   
-  <!-- Google Font: Inter -->
+  <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   
-  <!-- html2canvas & jsPDF for Ultra High Quality Export -->
+  <!-- Cropper.js CSS -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css"/>
+  
+  <!-- Libraries: Cropper, html2canvas, jsPDF -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <!-- QRCode.js -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
   <style>
     :root {
-      --accent: #FF6FA5;
-      --accent-hover: #ff5292;
-      --bg-dark: #0B0E17;
-      --card-bg: rgba(255, 255, 255, 0.07);
-      --card-border: rgba(255, 255, 255, 0.14);
+      --accent: #00F0FF;
+      --accent-hover: #00C8D6;
+      --bg-dark: #07090E;
+      --panel-bg: rgba(255, 255, 255, 0.05);
+      --panel-border: rgba(255, 255, 255, 0.12);
       --text-main: #FFFFFF;
-      --text-muted: #A0A5B5;
-      --id-primary: #1e3c72;
-      --id-secondary: #2a5298;
+      --text-muted: #94A3B8;
     }
 
     * {
@@ -36,368 +36,234 @@
       font-family: 'Inter', sans-serif;
     }
 
-    body {
+    html, body {
       width: 100vw;
-      min-height: 100vh;
+      height: 100vh;
       background-color: var(--bg-dark);
       color: var(--text-main);
-      overflow-x: hidden;
+      overflow: hidden;
     }
 
-    /* Background Orbs */
+    /* Ambient Glow Orbs */
     .orb {
-      position: fixed;
+      position: absolute;
       border-radius: 50%;
       filter: blur(90px);
       z-index: 0;
       pointer-events: none;
-      animation: float 18s ease-in-out infinite alternate;
     }
-    .orb-1 {
-      width: 350px;
-      height: 350px;
-      background: rgba(255, 111, 165, 0.22);
-      top: -80px;
-      left: -80px;
-    }
-    .orb-2 {
-      width: 420px;
-      height: 420px;
-      background: rgba(90, 169, 255, 0.18);
-      bottom: -100px;
-      right: -80px;
-      animation-delay: -6s;
-    }
-
-    @keyframes float {
-      0% { transform: translate(0, 0) scale(1); }
-      100% { transform: translate(30px, 40px) scale(1.08); }
-    }
+    .orb-1 { width: 300px; height: 300px; background: rgba(0, 240, 255, 0.15); top: -50px; left: -50px; }
+    .orb-2 { width: 350px; height: 350px; background: rgba(138, 43, 226, 0.15); bottom: -50px; right: -50px; }
 
     header {
       position: relative;
       z-index: 10;
-      height: 60px;
-      padding: 0 24px;
+      height: 50px;
+      padding: 0 20px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      border-bottom: 1px solid var(--card-border);
-      background: rgba(11, 14, 23, 0.7);
+      border-bottom: 1px solid var(--panel-border);
+      background: rgba(7, 9, 14, 0.6);
       backdrop-filter: blur(12px);
     }
+    .app-title { font-size: 1rem; font-weight: 700; letter-spacing: 0.5px; }
+    .app-title span { color: var(--accent); }
 
-    .home-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 8px 16px;
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      border-radius: 20px;
-      color: var(--text-main);
-      text-decoration: none;
-      font-size: 0.88rem;
-      font-weight: 500;
-      backdrop-filter: blur(16px);
-      transition: all 0.2s ease;
-    }
-    .home-btn:hover {
-      background: rgba(255, 255, 255, 0.15);
-    }
-
-    .app-title {
-      font-size: 1.1rem;
-      font-weight: 700;
-    }
-    .app-title span {
-      color: var(--accent);
-    }
-
-    .main-container {
+    .main-layout {
       position: relative;
       z-index: 5;
-      padding: 24px;
+      height: calc(100vh - 50px);
       display: grid;
-      grid-template-columns: 380px 1fr;
-      gap: 24px;
-      max-width: 1400px;
-      margin: 0 auto;
+      grid-template-columns: 340px 1fr;
+      gap: 16px;
+      padding: 16px;
     }
 
-    .glass-panel {
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      backdrop-filter: blur(22px) saturate(160%);
-      border-radius: 16px;
-      padding: 24px;
+    .glass-card {
+      background: var(--panel-bg);
+      border: 1px solid var(--panel-border);
+      backdrop-filter: blur(20px);
+      border-radius: 12px;
+      padding: 16px;
       display: flex;
       flex-direction: column;
-      gap: 16px;
+      gap: 14px;
     }
 
-    .panel-heading {
-      font-size: 1rem;
+    .controls-panel {
+      overflow-y: auto;
+    }
+
+    .section-title {
+      font-size: 0.75rem;
       font-weight: 700;
       color: var(--accent);
       text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-bottom: 4px;
+      letter-spacing: 1px;
     }
 
-    .form-group {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
+    .upload-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
     }
-    .form-group label {
-      font-size: 0.82rem;
-      color: var(--text-muted);
-      font-weight: 500;
-    }
-    .text-input, select {
-      width: 100%;
-      background: rgba(0, 0, 0, 0.3);
-      border: 1px solid var(--card-border);
+
+    .upload-box {
+      border: 1.5px dashed var(--panel-border);
       border-radius: 8px;
-      padding: 10px 12px;
-      color: #fff;
-      font-size: 0.88rem;
-      outline: none;
-      transition: border-color 0.2s;
-    }
-    .text-input:focus, select:focus {
-      border-color: var(--accent);
-    }
-
-    .file-input-wrapper {
-      position: relative;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 16px;
-      border: 2px dashed rgba(255, 111, 165, 0.4);
-      border-radius: 10px;
-      background: rgba(255, 255, 255, 0.02);
-      cursor: pointer;
+      padding: 12px 8px;
       text-align: center;
-      transition: border-color 0.2s;
+      cursor: pointer;
+      background: rgba(255,255,255,0.02);
+      transition: all 0.2s;
+      position: relative;
     }
-    .file-input-wrapper:hover {
+    .upload-box:hover {
       border-color: var(--accent);
+      background: rgba(0, 240, 255, 0.04);
     }
-    .file-input-wrapper input[type="file"] {
+    .upload-box input {
       position: absolute;
       width: 100%;
       height: 100%;
+      top: 0; left: 0;
       opacity: 0;
       cursor: pointer;
     }
+    .upload-label { font-size: 0.75rem; font-weight: 600; color: var(--text-main); }
+    .upload-sub { font-size: 0.65rem; color: var(--text-muted); margin-top: 2px; }
+
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .control-group label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      display: flex;
+      justify-content: space-between;
+    }
+    
+    select, input[type="range"] {
+      width: 100%;
+      background: rgba(0,0,0,0.4);
+      border: 1px solid var(--panel-border);
+      border-radius: 6px;
+      padding: 8px;
+      color: #fff;
+      font-size: 0.8rem;
+      outline: none;
+    }
+    input[type="range"] {
+      accent-color: var(--accent);
+      padding: 0;
+      height: 6px;
+      cursor: pointer;
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 8px;
+      margin-top: auto;
+    }
 
     .btn {
-      width: 100%;
-      padding: 12px;
+      flex: 1;
+      padding: 10px;
       border: none;
-      border-radius: 10px;
-      font-size: 0.95rem;
+      border-radius: 8px;
+      font-size: 0.8rem;
       font-weight: 600;
       cursor: pointer;
-      background: var(--accent);
-      color: #0B0E17;
-      transition: all 0.2s ease;
-      margin-top: 8px;
+      transition: all 0.2s;
     }
-    .btn:hover {
-      background: var(--accent-hover);
-      box-shadow: 0 0 15px rgba(255, 111, 165, 0.4);
-    }
+    .btn-primary { background: var(--accent); color: #000; }
+    .btn-primary:hover { background: var(--accent-hover); }
+    .btn-secondary { background: rgba(255,255,255,0.1); color: #fff; border: 1px solid var(--panel-border); }
+    .btn-secondary:hover { background: rgba(255,255,255,0.18); }
 
-    /* ID Card Preview Styles */
+    /* Preview Canvas Area */
     .preview-stage {
       display: flex;
-      flex-direction: column;
       align-items: center;
-      gap: 30px;
-    }
-
-    .card-pair {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 30px;
       justify-content: center;
-    }
-
-    /* Standard CR80 ID Card Aspect Ratio (85.6mm x 53.9mm) ~ 3.375 x 2.125 inches */
-    .id-card-frame {
-      width: 320px;
-      height: 480px;
-      border-radius: 16px;
-      background: #ffffff;
-      color: #333333;
-      position: relative;
-      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
       overflow: hidden;
-      display: flex;
-      flex-direction: column;
-      user-select: none;
-    }
-
-    /* Front Card Design */
-    .card-header-bg {
-      background: linear-gradient(135deg, var(--id-primary), var(--id-secondary));
-      color: #ffffff;
-      padding: 20px 16px 45px 16px;
-      text-align: center;
+      background: rgba(0,0,0,0.2);
+      border-radius: 12px;
       position: relative;
     }
-    .card-header-bg h3 {
-      font-size: 1.05rem;
-      font-weight: 800;
-      letter-spacing: 0.5px;
-      text-transform: uppercase;
-    }
-    .card-header-bg p {
-      font-size: 0.68rem;
-      opacity: 0.85;
-      margin-top: 2px;
-    }
 
-    .photo-wrapper {
-      width: 110px;
-      height: 125px;
-      border-radius: 10px;
-      border: 4px solid #ffffff;
-      background: #e2e8f0;
-      position: absolute;
-      bottom: -55px;
-      left: 50%;
-      transform: translateX(-50%);
-      overflow: hidden;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+    /* Standard A4 Aspect Ratio Canvas Container */
+    .a4-page {
+      width: 380px;
+      height: 537px; /* Maintains 210 x 297 mm Ratio */
+      background: #FFFFFF;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      position: relative;
       display: flex;
       align-items: center;
       justify-content: center;
-    }
-    .photo-wrapper img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-
-    .card-body-front {
-      margin-top: 60px;
-      padding: 12px 20px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      text-align: center;
-      flex: 1;
-    }
-    .holder-name {
-      font-size: 1.15rem;
-      font-weight: 800;
-      color: #1e293b;
-    }
-    .holder-role {
-      font-size: 0.78rem;
-      font-weight: 600;
-      color: var(--id-primary);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-bottom: 12px;
-    }
-
-    .info-table {
-      width: 100%;
-      font-size: 0.75rem;
-      border-collapse: collapse;
-      margin-top: 4px;
-    }
-    .info-table td {
-      padding: 4px 0;
-      text-align: left;
-    }
-    .info-table td.label {
-      font-weight: 600;
-      color: #64748b;
-      width: 35%;
-    }
-    .info-table td.val {
-      font-weight: 700;
-      color: #0f172a;
-    }
-
-    .card-footer-front {
-      background: linear-gradient(135deg, var(--id-primary), var(--id-secondary));
-      height: 12px;
-      width: 100%;
-    }
-
-    /* Back Card Design */
-    .card-back-body {
       padding: 20px;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      height: 100%;
-    }
-    .back-header {
-      border-bottom: 2px solid var(--id-primary);
-      padding-bottom: 6px;
-      font-size: 0.85rem;
-      font-weight: 700;
-      color: var(--id-primary);
-      text-transform: uppercase;
+      box-sizing: border-box;
     }
 
-    .back-info {
-      font-size: 0.72rem;
-      color: #334155;
+    .card-container {
       display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-    .back-info p {
-      line-height: 1.3;
-    }
-    .back-info strong {
-      color: #0f172a;
-    }
-
-    .qr-container {
-      display: flex;
-      flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 6px;
-      margin: 10px 0;
-    }
-    #qrcode img {
-      border: 4px solid #fff;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      width: 100%;
+      height: 100%;
     }
 
-    .sign-section {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-end;
-      margin-top: 10px;
-    }
-    .sign-box {
-      text-align: center;
-      font-size: 0.65rem;
-      color: #64748b;
-    }
-    .sign-line {
-      width: 90px;
-      border-top: 1px solid #94a3b8;
-      margin-bottom: 4px;
+    .id-card-img {
+      object-fit: contain;
+      border: 1px dashed #ccc;
+      background: #f8fafc;
     }
 
-    @media (max-width: 880px) {
-      .main-container {
-        grid-template-columns: 1fr;
-      }
+    /* Modal Styling for Cropper */
+    .modal {
+      position: fixed;
+      top: 0; left: 0; width: 100vw; height: 100vh;
+      background: rgba(0,0,0,0.85);
+      backdrop-filter: blur(10px);
+      z-index: 100;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .cropper-container-wrapper {
+      max-width: 80vw;
+      max-height: 70vh;
+      width: 600px;
+      height: 400px;
+      background: #111;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    /* Cropper Line Visibility Override */
+    .cropper-view-box {
+      outline: 2px solid var(--accent) !important;
+      outline-color: var(--accent) !important;
+    }
+    .cropper-line, .cropper-point {
+      background-color: #FF0055 !important; /* High contrast pink/red for dark & light backgrounds */
+      opacity: 0.9 !important;
+    }
+    .cropper-point.point-se {
+      width: 8px !important;
+      height: 8px !important;
+    }
+
+    @media (max-width: 800px) {
+      html, body { overflow: auto; height: auto; }
+      .main-layout { grid-template-columns: 1fr; height: auto; }
+      .preview-stage { height: 580px; }
     }
   </style>
 </head>
@@ -407,297 +273,222 @@
   <div class="orb orb-2"></div>
 
   <header>
-    <a href="../index.html" class="home-btn">← Home</a>
-    <div class="app-title">ID Card <span>Maker</span></div>
+    <div class="app-title">ID Card <span>Print Studio</span></div>
   </header>
 
-  <div class="main-container">
+  <div class="main-layout">
     
-    <!-- Controls Panel -->
-    <div class="glass-panel">
-      <div class="panel-heading">Card Details</div>
+    <!-- Controls -->
+    <div class="glass-card controls-panel">
+      <div class="section-title">1. Upload Cards</div>
+      <div class="upload-grid">
+        <div class="upload-box" onclick="document.getElementById('frontInput').click()">
+          <div class="upload-label">Front Side</div>
+          <div class="upload-sub" id="frontStatus">Click to Upload</div>
+          <input type="file" id="frontInput" accept="image/*" onclick="event.stopPropagation()">
+        </div>
+        <div class="upload-box" onclick="document.getElementById('backInput').click()">
+          <div class="upload-label">Back Side</div>
+          <div class="upload-sub" id="backStatus">Click to Upload</div>
+          <input type="file" id="backInput" accept="image/*" onclick="event.stopPropagation()">
+        </div>
+      </div>
 
-      <div class="form-group">
-        <label>Theme Color</label>
-        <select id="themeSelect">
-          <option value="navy" selected>Classic Navy Blue</option>
-          <option value="emerald">Emerald Green</option>
-          <option value="maroon">Royal Maroon</option>
-          <option value="dark">Modern Dark</option>
+      <div class="section-title" style="margin-top: 8px;">2. Print Layout</div>
+      
+      <div class="control-group">
+        <label>Orientation Mode</label>
+        <select id="layoutSelect">
+          <option value="side">Side by Side</option>
+          <option value="topdown" selected>Top & Bottom (Upar-Niche)</option>
         </select>
       </div>
 
-      <div class="form-group">
-        <label>Organization / School Name</label>
-        <input type="text" id="orgName" class="text-input" value="GLOBAL TECH INSTITUTE">
+      <div class="control-group">
+        <label><span>Card Scale</span><span id="scaleVal">85 mm</span></label>
+        <input type="range" id="scaleSlider" min="50" max="130" value="85">
       </div>
 
-      <div class="form-group">
-        <label>Tagline / Subtitle</label>
-        <input type="text" id="orgSub" class="text-input" value="Excellence in Education">
+      <div class="control-group">
+        <label><span>Card Gap</span><span id="gapVal">10 mm</span></label>
+        <input type="range" id="gapSlider" min="0" max="50" value="10">
       </div>
 
-      <div class="form-group">
-        <label>Holder Photo</label>
-        <div class="file-input-wrapper">
-          <span style="font-size: 0.85rem; color: var(--text-muted);" id="photoFileName">Upload Passport Photo</span>
-          <input type="file" id="photoInput" accept="image/*">
-        </div>
+      <div class="btn-group">
+        <button class="btn btn-secondary" id="downloadJpgBtn">JPG</button>
+        <button class="btn btn-primary" id="downloadPdfBtn">PDF (300 DPI)</button>
       </div>
-
-      <div class="form-group">
-        <label>Full Name</label>
-        <input type="text" id="holderName" class="text-input" value="Rahul Sharma">
-      </div>
-
-      <div class="form-group">
-        <label>Designation / Role</label>
-        <input type="text" id="holderRole" class="text-input" value="Senior Software Engineer">
-      </div>
-
-      <div class="form-group">
-        <label>ID / Roll Number</label>
-        <input type="text" id="holderId" class="text-input" value="GTI-2026-894">
-      </div>
-
-      <div class="form-group">
-        <label>Blood Group</label>
-        <input type="text" id="holderBlood" class="text-input" value="O+">
-      </div>
-
-      <div class="form-group">
-        <label>Mobile Number</label>
-        <input type="text" id="holderPhone" class="text-input" value="+91 98765 43210">
-      </div>
-
-      <div class="form-group">
-        <label>Emergency Address</label>
-        <input type="text" id="holderAddress" class="text-input" value="Plot 42, Tech Park, Sector 62, Noida, UP">
-      </div>
-
-      <button class="btn" id="downloadPdfBtn">Download HD PDF (Front & Back)</button>
     </div>
 
     <!-- Live Preview Stage -->
-    <div class="glass-panel preview-stage">
-      <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
-        <div class="panel-heading">Live HD Preview</div>
-        <div style="font-size: 0.78rem; color: var(--text-muted);">Standard CR80 Size</div>
-      </div>
-
-      <div class="card-pair">
-        
-        <!-- FRONT CARD -->
-        <div class="id-card-frame" id="cardFront">
-          <div class="card-header-bg">
-            <h3 id="prevOrgName">GLOBAL TECH INSTITUTE</h3>
-            <p id="prevOrgSub">Excellence in Education</p>
-            <div class="photo-wrapper">
-              <img id="prevPhoto" src="https://via.placeholder.com/150?text=Photo" alt="Profile Photo">
-            </div>
-          </div>
-
-          <div class="card-body-front">
-            <div class="holder-name" id="prevHolderName">Rahul Sharma</div>
-            <div class="holder-role" id="prevHolderRole">Senior Software Engineer</div>
-
-            <table class="info-table">
-              <tr>
-                <td class="label">ID NO:</td>
-                <td class="val" id="prevHolderId">GTI-2026-894</td>
-              </tr>
-              <tr>
-                <td class="label">BLOOD:</td>
-                <td class="val" id="prevHolderBlood">O+</td>
-              </tr>
-              <tr>
-                <td class="label">PHONE:</td>
-                <td class="val" id="prevHolderPhone">+91 98765 43210</td>
-              </tr>
-            </table>
-          </div>
-
-          <div class="card-footer-front"></div>
+    <div class="preview-stage">
+      <div class="a4-page" id="a4Page">
+        <div class="card-container" id="cardContainer">
+          <img id="imgFrontPrev" class="id-card-img" style="display:none;" alt="Front">
+          <img id="imgBackPrev" class="id-card-img" style="display:none;" alt="Back">
         </div>
-
-        <!-- BACK CARD -->
-        <div class="id-card-frame" id="cardBack">
-          <div class="card-back-body">
-            <div>
-              <div class="back-header">Terms & Details</div>
-              <div class="back-info" style="margin-top: 10px;">
-                <p><strong>Address:</strong> <span id="prevHolderAddress">Plot 42, Tech Park, Sector 62, Noida, UP</span></p>
-                <p><strong>Property Notice:</strong> This card is the property of <span id="prevOrgNotice">GLOBAL TECH INSTITUTE</span>. If found, please return to the office address.</p>
-              </div>
-            </div>
-
-            <div class="qr-container">
-              <div id="qrcode"></div>
-              <span style="font-size: 0.6rem; color: #64748b; font-weight: 600;">SCAN FOR VERIFICATION</span>
-            </div>
-
-            <div class="sign-section">
-              <div class="sign-box">
-                <div class="sign-line"></div>
-                Cardholder Sign
-              </div>
-              <div class="sign-box">
-                <div class="sign-line"></div>
-                Auth. Signatory
-              </div>
-            </div>
-          </div>
-        </div>
-
       </div>
     </div>
 
   </div>
 
+  <!-- Crop Modal -->
+  <div class="modal" id="cropModal">
+    <div class="cropper-container-wrapper">
+      <img id="cropperImage" src="" style="max-width: 100%;">
+    </div>
+    <div style="display: flex; gap: 10px;">
+      <button class="btn btn-secondary" id="cancelCropBtn" style="width: 100px;">Cancel</button>
+      <button class="btn btn-primary" id="applyCropBtn" style="width: 140px;">Apply Crop</button>
+    </div>
+  </div>
+
   <script>
     // Elements
-    const orgName = document.getElementById('orgName');
-    const orgSub = document.getElementById('orgSub');
-    const photoInput = document.getElementById('photoInput');
-    const photoFileName = document.getElementById('photoFileName');
-    const holderName = document.getElementById('holderName');
-    const holderRole = document.getElementById('holderRole');
-    const holderId = document.getElementById('holderId');
-    const holderBlood = document.getElementById('holderBlood');
-    const holderPhone = document.getElementById('holderPhone');
-    const holderAddress = document.getElementById('holderAddress');
-    const themeSelect = document.getElementById('themeSelect');
+    const frontInput = document.getElementById('frontInput');
+    const backInput = document.getElementById('backInput');
+    const frontStatus = document.getElementById('frontStatus');
+    const backStatus = document.getElementById('backStatus');
+    
+    const layoutSelect = document.getElementById('layoutSelect');
+    const scaleSlider = document.getElementById('scaleSlider');
+    const gapSlider = document.getElementById('gapSlider');
+    const scaleVal = document.getElementById('scaleVal');
+    const gapVal = document.getElementById('gapVal');
 
-    // Previews
-    const prevOrgName = document.getElementById('prevOrgName');
-    const prevOrgSub = document.getElementById('prevOrgSub');
-    const prevOrgNotice = document.getElementById('prevOrgNotice');
-    const prevPhoto = document.getElementById('prevPhoto');
-    const prevHolderName = document.getElementById('prevHolderName');
-    const prevHolderRole = document.getElementById('prevHolderRole');
-    const prevHolderId = document.getElementById('prevHolderId');
-    const prevHolderBlood = document.getElementById('prevHolderBlood');
-    const prevHolderPhone = document.getElementById('prevHolderPhone');
-    const prevHolderAddress = document.getElementById('prevHolderAddress');
+    const cardContainer = document.getElementById('cardContainer');
+    const imgFrontPrev = document.getElementById('imgFrontPrev');
+    const imgBackPrev = document.getElementById('imgBackPrev');
 
-    // QR Code Generator
-    let qrCodeObj = null;
-    function updateQRCode() {
-      const qrData = `ID: ${holderId.value} | Name: ${holderName.value} | Phone: ${holderPhone.value}`;
-      const qrContainer = document.getElementById('qrcode');
-      qrContainer.innerHTML = '';
-      qrCodeObj = new QRCode(qrContainer, {
-        text: qrData,
-        width: 80,
-        height: 80,
-        colorDark : "#0f172a",
-        colorLight : "#ffffff",
-        correctLevel : QRCode.CorrectLevel.H
+    const cropModal = document.getElementById('cropModal');
+    const cropperImage = document.getElementById('cropperImage');
+    const applyCropBtn = document.getElementById('applyCropBtn');
+    const cancelCropBtn = document.getElementById('cancelCropBtn');
+
+    let cropper = null;
+    let activeSide = null; // 'front' or 'back'
+
+    // Image Upload & Crop Trigger
+    function handleFileSelect(file, side) {
+      if (!file) return;
+      activeSide = side;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        cropperImage.src = e.target.result;
+        cropModal.style.display = 'flex';
+        
+        if (cropper) cropper.destroy();
+        cropper = new Cropper(cropperImage, {
+          viewMode: 1,
+          autoCropArea: 0.9,
+          responsive: true,
+          restore: false
+        });
+      };
+      reader.readAsDataURL(file);
+    }
+
+    frontInput.addEventListener('change', (e) => handleFileSelect(e.target.files[0], 'front'));
+    backInput.addEventListener('change', (e) => handleFileSelect(e.target.files[0], 'back'));
+
+    cancelCropBtn.addEventListener('click', () => {
+      cropModal.style.display = 'none';
+      if (cropper) cropper.destroy();
+      frontInput.value = '';
+      backInput.value = '';
+    });
+
+    applyCropBtn.addEventListener('click', () => {
+      if (!cropper) return;
+      const canvas = cropper.getCroppedCanvas({
+        imageSmoothingEnabled: true,
+        imageSmoothingQuality: 'high'
+      });
+
+      const croppedDataUrl = canvas.toDataURL('image/png');
+
+      if (activeSide === 'front') {
+        imgFrontPrev.src = croppedDataUrl;
+        imgFrontPrev.style.display = 'block';
+        frontStatus.innerText = 'Uploaded ✓';
+      } else {
+        imgBackPrev.src = croppedDataUrl;
+        imgBackPrev.style.display = 'block';
+        backStatus.innerText = 'Uploaded ✓';
+      }
+
+      cropModal.style.display = 'none';
+      cropper.destroy();
+      updateLayout();
+    });
+
+    // Layout Update & Boundaries Constraint Logic
+    function updateLayout() {
+      const isTopDown = layoutSelect.value === 'topdown';
+      const gap = parseInt(gapSlider.value);
+      let scale = parseInt(scaleSlider.value);
+
+      // Max Constraints based on A4 aspect limits
+      // Page display width: 380px, height: 537px
+      const maxAllowedWidth = isTopDown ? 320 : 160; 
+      const maxAllowedHeight = isTopDown ? 220 : 440;
+
+      // Restrict scale value to prevent overflowing A4 page border
+      if (scale * 3.2 > maxAllowedWidth) {
+        scale = Math.floor(maxAllowedWidth / 3.2);
+      }
+
+      scaleVal.innerText = `${scale} mm`;
+      gapVal.innerText = `${gap} mm`;
+
+      cardContainer.style.flexDirection = isTopDown ? 'column' : 'row';
+      cardContainer.style.gap = `${gap * 0.8}px`;
+
+      // Standard ID Card Proportions (85.6mm x 54mm)
+      const renderWidth = scale * 3.2; // Scaling factor for web A4 container
+      const renderHeight = renderWidth * (54 / 85.6);
+
+      [imgFrontPrev, imgBackPrev].forEach(img => {
+        img.style.width = `${renderWidth}px`;
+        img.style.height = `${renderHeight}px`;
       });
     }
 
-    // Dynamic Binding
-    orgName.addEventListener('input', () => {
-      prevOrgName.innerText = orgName.value || 'ORGANIZATION NAME';
-      prevOrgNotice.innerText = orgName.value || 'ORGANIZATION';
-    });
-    orgSub.addEventListener('input', () => prevOrgSub.innerText = orgSub.value);
-    holderName.addEventListener('input', () => {
-      prevHolderName.innerText = holderName.value || 'Full Name';
-      updateQRCode();
-    });
-    holderRole.addEventListener('input', () => prevHolderRole.innerText = holderRole.value);
-    holderId.addEventListener('input', () => {
-      prevHolderId.innerText = holderId.value;
-      updateQRCode();
-    });
-    holderBlood.addEventListener('input', () => prevHolderBlood.innerText = holderBlood.value);
-    holderPhone.addEventListener('input', () => {
-      prevHolderPhone.innerText = holderPhone.value;
-      updateQRCode();
-    });
-    holderAddress.addEventListener('input', () => prevHolderAddress.innerText = holderAddress.value);
+    layoutSelect.addEventListener('change', updateLayout);
+    scaleSlider.addEventListener('input', updateLayout);
+    gapSlider.addEventListener('input', updateLayout);
 
-    // Photo Upload Handling
-    photoInput.addEventListener('change', (e) => {
-      const file = e.target.files[0];
-      if (file) {
-        photoFileName.innerText = file.name;
-        const reader = new FileReader();
-        reader.onload = (event) => {
-          prevPhoto.src = event.target.result;
-        };
-        reader.readAsDataURL(file);
-      }
+    // Export Logic (300 DPI A4 Engine)
+    async function generateA4Canvas() {
+      const page = document.getElementById('a4Page');
+      return await html2canvas(page, {
+        scale: 3, // 3x High Definition Render
+        useCORS: true,
+        backgroundColor: '#FFFFFF'
+      });
+    }
+
+    document.getElementById('downloadJpgBtn').addEventListener('click', async () => {
+      const canvas = await generateA4Canvas();
+      const link = document.createElement('a');
+      link.download = 'A4_ID_Card_Print.jpg';
+      link.href = canvas.toDataURL('image/jpeg', 0.92);
+      link.click();
     });
 
-    // Theme Switcher
-    themeSelect.addEventListener('change', () => {
-      const theme = themeSelect.value;
-      let primary = '#1e3c72', secondary = '#2a5298';
-      
-      if (theme === 'emerald') {
-        primary = '#059669'; secondary = '#10b981';
-      } else if (theme === 'maroon') {
-        primary = '#881337'; secondary = '#be123c';
-      } else if (theme === 'dark') {
-        primary = '#0f172a'; secondary = '#334155';
-      }
-
-      document.documentElement.style.setProperty('--id-primary', primary);
-      document.documentElement.style.setProperty('--id-secondary', secondary);
-    });
-
-    // Initialize QR Code
-    updateQRCode();
-
-    // High Quality PDF Export
     document.getElementById('downloadPdfBtn').addEventListener('click', async () => {
-      const btn = document.getElementById('downloadPdfBtn');
-      btn.innerText = 'Generating HD PDF...';
-      btn.disabled = true;
+      const canvas = await generateA4Canvas();
+      const imgData = canvas.toDataURL('image/jpeg', 0.92);
 
-      try {
-        const { jsPDF } = window.jspdf;
-        const cardFront = document.getElementById('cardFront');
-        const cardBack = document.getElementById('cardBack');
-
-        // Scale 3x for Crisp Printing Quality (300 DPI feel)
-        const opts = {
-          scale: 3,
-          useCORS: true,
-          logging: false
-        };
-
-        const canvasFront = await html2canvas(cardFront, opts);
-        const canvasBack = await html2canvas(cardBack, opts);
-
-        const imgFront = canvasFront.toDataURL('image/png');
-        const imgBack = canvasBack.toDataURL('image/png');
-
-        // PDF Dimensions for standard ID Card (85.6mm x 53.9mm)
-        const pdf = new jsPDF({
-          orientation: 'portrait',
-          unit: 'mm',
-          format: [54, 86]
-        });
-
-        // Add Front
-        pdf.addImage(imgFront, 'PNG', 0, 0, 54, 86);
-        
-        // Add Back Page
-        pdf.addPage([54, 86], 'portrait');
-        pdf.addImage(imgBack, 'PNG', 0, 0, 54, 86);
-
-        const filename = `${holderName.value.replace(/\s+/g, '_')}_ID_Card.pdf`;
-        pdf.save(filename);
-      } catch (err) {
-        alert('PDF Generation failed: ' + err.message);
-      } finally {
-        btn.innerText = 'Download HD PDF (Front & Back)';
-        btn.disabled = false;
-      }
+      const { jsPDF } = window.jspdf;
+      // Exact ISO A4 dimensions (210mm x 297mm)
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      pdf.addImage(imgData, 'JPEG', 0, 0, 210, 297);
+      pdf.save('A4_ID_Card_Print.pdf');
     });
+
+    // Initial Trigger
+    updateLayout();
   </script>
 </body>
 </html>
