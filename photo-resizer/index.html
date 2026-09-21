@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>JPG Photo Resizer & Compressor</title>
+  <title>JPG Photo Resizer Studio</title>
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -20,6 +20,7 @@
       --pink-dashed: #8A3A52;
       --text-main: #FFFFFF;
       --text-muted: #8A92A6;
+      --error-color: #FF4D4D;
     }
 
     * {
@@ -158,7 +159,7 @@
       color: #FFFFFF;
     }
 
-    /* Left Panel Original Info Box */
+    /* Left Panel Original Info Card */
     .orig-details-card {
       background: rgba(0, 0, 0, 0.3);
       border: 1px solid var(--panel-border);
@@ -245,10 +246,17 @@
       cursor: not-allowed;
     }
 
-    .status-note {
-      font-size: 0.75rem;
-      color: var(--text-muted);
+    .status-msg {
+      font-size: 0.78rem;
       text-align: center;
+      min-height: 18px;
+      font-weight: 500;
+    }
+    .status-msg.error {
+      color: var(--error-color);
+    }
+    .status-msg.success {
+      color: #4DEEEA;
     }
 
     /* Right Preview Stage */
@@ -282,7 +290,6 @@
     .preview-container {
       flex: 1;
       display: flex;
-      flex-direction: column;
       align-items: center;
       justify-content: center;
       border-radius: 12px;
@@ -300,30 +307,18 @@
 
     .compressed-display {
       display: none;
-      flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 16px;
       width: 100%;
       height: 100%;
     }
 
     .compressed-display img {
       max-width: 100%;
-      max-height: calc(100vh - 250px);
+      max-height: calc(100vh - 220px);
       object-fit: contain;
       border-radius: 8px;
       box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-    }
-
-    .compressed-info-badge {
-      background: rgba(216, 75, 114, 0.15);
-      border: 1px solid var(--pink-dashed);
-      color: #FFF;
-      padding: 8px 20px;
-      border-radius: 20px;
-      font-size: 0.85rem;
-      font-weight: 600;
     }
 
     @media (max-width: 850px) {
@@ -362,7 +357,7 @@
         <input type="file" id="fileInput" accept="image/*">
       </div>
 
-      <!-- Original Image Details Card -->
+      <!-- Original Image Details -->
       <div class="orig-details-card" id="origDetailsCard">
         <div class="orig-details-title">Original Image Details</div>
         <div class="orig-detail-row">File Name: <span id="origName">-</span></div>
@@ -373,7 +368,7 @@
       <div class="form-group">
         <div class="form-label">Exact Target File Size</div>
         <div class="target-input-row">
-          <input type="number" id="targetSize" value="200" min="1">
+          <input type="number" id="targetSize" placeholder="e.g. 50" min="1">
           <select id="sizeUnit">
             <option value="KB" selected>KB</option>
             <option value="MB">MB</option>
@@ -383,7 +378,7 @@
 
       <button class="btn-action" id="processBtn" disabled>Process Image</button>
 
-      <div class="status-note" id="statusNote">Upload an Image to get started</div>
+      <div class="status-msg" id="statusMsg"></div>
 
       <button class="btn-action" id="downloadBtn" style="margin-top: auto; display: none;">Download JPG</button>
     </div>
@@ -392,7 +387,7 @@
     <div class="right-panel">
       <div class="preview-header">
         <div class="panel-heading">Compressed Image Preview</div>
-        <div class="badge-view" id="previewBadge">Result View</div>
+        <div class="badge-view">Result Preview</div>
       </div>
 
       <div class="preview-container">
@@ -400,7 +395,6 @@
 
         <div class="compressed-display" id="compressedDisplay">
           <img id="compImg" src="" alt="Compressed Preview">
-          <div class="compressed-info-badge" id="compBadge">Size: 0 KB</div>
         </div>
       </div>
     </div>
@@ -419,12 +413,11 @@
     const sizeUnit = document.getElementById('sizeUnit');
     const processBtn = document.getElementById('processBtn');
     const downloadBtn = document.getElementById('downloadBtn');
-    const statusNote = document.getElementById('statusNote');
+    const statusMsg = document.getElementById('statusMsg');
 
     const placeholderText = document.getElementById('placeholderText');
     const compressedDisplay = document.getElementById('compressedDisplay');
     const compImg = document.getElementById('compImg');
-    const compBadge = document.getElementById('compBadge');
 
     let loadedImage = null;
     let originalSizeBytes = 0;
@@ -445,7 +438,6 @@
       originalSizeBytes = file.size;
       fileStatus.innerText = 'Change Photo';
 
-      // Set Original Info on Left Side Panel
       origName.innerText = file.name.length > 20 ? file.name.substring(0, 18) + '...' : file.name;
       origSize.innerText = formatBytes(originalSizeBytes);
 
@@ -458,9 +450,8 @@
           origDetailsCard.style.display = 'flex';
 
           processBtn.disabled = false;
-          statusNote.innerText = 'Ready to process';
-
-          runCompression();
+          statusMsg.className = 'status-msg';
+          statusMsg.innerText = 'Enter target size and click Process';
         };
         img.src = evt.target.result;
       };
@@ -472,23 +463,32 @@
     function runCompression() {
       if (!loadedImage) return;
 
-      const targetVal = parseFloat(targetSize.value) || 200;
+      const userValue = parseFloat(targetSize.value);
       const unit = sizeUnit.value;
-      let maxBytes = unit === 'MB' ? targetVal * 1024 * 1024 : targetVal * 1024;
 
-      // Rule: Must be smaller than original size
-      if (maxBytes >= originalSizeBytes) {
-        maxBytes = originalSizeBytes - 100; // Force size to be strictly smaller than original
+      // Validation 1: Blank input
+      if (!userValue || userValue <= 0) {
+        showError('Please enter a valid target size!');
+        return;
       }
 
-      statusNote.innerText = 'Processing...';
+      const targetBytes = unit === 'MB' ? userValue * 1024 * 1024 : userValue * 1024;
+
+      // Validation 2: Target size larger than original size
+      if (targetBytes >= originalSizeBytes) {
+        showError(`Target size must be smaller than original size (${formatBytes(originalSizeBytes)})!`);
+        return;
+      }
+
+      statusMsg.className = 'status-msg';
+      statusMsg.innerText = 'Processing...';
 
       let minQuality = 0.01;
-      let maxQuality = 1.0;
+      let maxQuality = 0.98;
       let bestResult = null;
       let scale = 1.0;
 
-      // Double-pass optimization loop
+      // Binary Search Quality Loop
       for (let pass = 0; pass < 2; pass++) {
         minQuality = 0.01;
         maxQuality = 0.98;
@@ -497,7 +497,7 @@
           const midQuality = (minQuality + maxQuality) / 2;
           const res = renderJpg(loadedImage, scale, midQuality);
 
-          if (res.size <= maxBytes) {
+          if (res.size <= targetBytes) {
             bestResult = res;
             minQuality = midQuality;
           } else {
@@ -506,22 +506,31 @@
         }
 
         if (bestResult) break;
-        scale *= 0.75; // Downscale dimensions if needed
+        scale *= 0.75;
       }
 
       if (!bestResult) {
-        bestResult = renderJpg(loadedImage, 0.4, 0.05);
+        bestResult = renderJpg(loadedImage, 0.3, 0.05);
       }
 
       finalCompressedDataUrl = bestResult.dataUrl;
       compImg.src = finalCompressedDataUrl;
-      compBadge.innerText = `Compressed Size: ${formatBytes(bestResult.size)} (${bestResult.width}x${bestResult.height})`;
 
       placeholderText.style.display = 'none';
       compressedDisplay.style.display = 'flex';
 
-      statusNote.innerText = `Compressed: ${formatBytes(bestResult.size)} (< Original Size)`;
+      showSuccess(`Compressed under ${userValue} ${unit}!`);
       downloadBtn.style.display = 'block';
+    }
+
+    function showError(msg) {
+      statusMsg.className = 'status-msg error';
+      statusMsg.innerText = msg;
+    }
+
+    function showSuccess(msg) {
+      statusMsg.className = 'status-msg success';
+      statusMsg.innerText = msg;
     }
 
     function renderJpg(img, scale, quality) {
