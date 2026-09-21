@@ -79,6 +79,10 @@
       font-size: 0.8rem;
       font-weight: 500;
       cursor: pointer;
+      transition: background 0.2s ease;
+    }
+    .btn-home:hover {
+      background: rgba(255, 255, 255, 0.12);
     }
 
     .app-title {
@@ -339,7 +343,7 @@
   <div class="glow-2"></div>
 
   <header>
-    <button class="btn-home">&larr; Home</button>
+    <button class="btn-home" id="homeBtn">&larr; Home</button>
     <div class="app-title">JPG <span>Resizer Studio</span></div>
   </header>
 
@@ -402,6 +406,7 @@
   </div>
 
   <script>
+    const homeBtn = document.getElementById('homeBtn');
     const fileInput = document.getElementById('fileInput');
     const fileStatus = document.getElementById('fileStatus');
     const origDetailsCard = document.getElementById('origDetailsCard');
@@ -423,6 +428,11 @@
     let loadedImage = null;
     let originalSizeBytes = 0;
     let finalCompressedDataUrl = '';
+
+    // Home Button Handler - Page Reload / Reset
+    homeBtn.addEventListener('click', () => {
+      window.location.reload();
+    });
 
     function formatBytes(bytes) {
       if (bytes === 0) return '0 KB';
@@ -543,7 +553,6 @@
       mainPreviewImg.src = finalCompressedDataUrl;
       previewStateBadge.innerText = 'Compressed View';
 
-      // Display EXACT actual compressed size instead of dummy value
       showSuccess(`Successfully Compressed to ${formatBytes(bestResult.size)}!`);
       downloadBtn.style.display = 'block';
     }
