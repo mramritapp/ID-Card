@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Ultra Photo Compressor Studio</title>
+  <title>Photo Resizer & Compressor - Target KB/MB</title>
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -67,7 +67,7 @@
       margin: 20px auto;
       padding: 0 16px;
       display: grid;
-      grid-template-columns: 340px 1fr;
+      grid-template-columns: 350px 1fr;
       gap: 20px;
     }
 
@@ -113,32 +113,27 @@
     .upload-label { font-size: 0.9rem; font-weight: 600; }
     .upload-sub { font-size: 0.75rem; color: var(--text-muted); margin-top: 4px; }
 
-    .control-group {
+    .target-input-group {
       display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-    .control-group label {
-      font-size: 0.8rem;
-      color: var(--text-muted);
-      display: flex;
-      justify-content: space-between;
+      gap: 8px;
     }
 
-    select, input[type="range"] {
-      width: 100%;
+    input[type="number"], select {
       background: rgba(0,0,0,0.4);
       border: 1px solid var(--panel-border);
       border-radius: 8px;
-      padding: 8px;
+      padding: 10px;
       color: #fff;
-      font-size: 0.85rem;
+      font-size: 0.9rem;
       outline: none;
     }
-    input[type="range"] {
-      accent-color: var(--accent);
-      padding: 0;
-      height: 6px;
+
+    input[type="number"] {
+      flex: 1;
+    }
+
+    select {
+      width: 90px;
       cursor: pointer;
     }
 
@@ -154,7 +149,7 @@
     }
     .btn-primary { background: var(--accent); color: #000; }
     .btn-primary:hover { background: var(--accent-hover); }
-    .btn-secondary { background: rgba(255,255,255,0.1); color: #fff; border: 1px solid var(--panel-border); }
+    .btn-primary:disabled { background: rgba(255,255,255,0.2); color: #888; cursor: not-allowed; }
 
     .preview-stage {
       display: flex;
@@ -189,13 +184,19 @@
     .info-badge {
       font-size: 0.75rem;
       background: rgba(255,255,255,0.08);
-      padding: 6px 12px;
+      padding: 8px 12px;
       border-radius: 20px;
       color: var(--text-muted);
       width: 100%;
       text-align: center;
     }
     .info-badge span { color: #fff; font-weight: 600; }
+
+    .status-msg {
+      font-size: 0.75rem;
+      color: var(--accent);
+      text-align: center;
+    }
 
     @media (max-width: 768px) {
       .main-layout { grid-template-columns: 1fr; }
@@ -209,42 +210,34 @@
   <div class="orb orb-2"></div>
 
   <header>
-    <div class="app-title">Ultra <span>Photo Compressor</span></div>
+    <div class="app-title">JPG Photo <span>Compressor Studio</span></div>
   </header>
 
   <div class="main-layout">
     
     <!-- Controls Panel -->
     <div class="glass-card">
-      <div class="section-title">1. Upload Image</div>
+      <div class="section-title">1. Upload Photo</div>
       <div class="upload-box" onclick="document.getElementById('imageInput').click()">
         <div class="upload-label">Select Photo</div>
         <div class="upload-sub" id="uploadStatus">Click or Drag Image Here</div>
         <input type="file" id="imageInput" accept="image/*">
       </div>
 
-      <div class="section-title" style="margin-top: 8px;">2. Compression Settings</div>
-
-      <div class="control-group">
-        <label><span>Quality</span><span id="qualityVal">80%</span></label>
-        <input type="range" id="qualitySlider" min="5" max="100" value="80">
-      </div>
-
-      <div class="control-group">
-        <label><span>Max Width (Scale)</span><span id="scaleVal">100%</span></label>
-        <input type="range" id="scaleSlider" min="10" max="100" value="100">
-      </div>
-
-      <div class="control-group">
-        <label>Output Format</label>
-        <select id="formatSelect">
-          <option value="image/jpeg">JPG (Best Compression)</option>
-          <option value="image/webp">WEBP (Ultra Small Size)</option>
-          <option value="image/png">PNG (Lossless)</option>
+      <div class="section-title" style="margin-top: 8px;">2. Target File Size</div>
+      <div class="target-input-group">
+        <input type="number" id="targetSizeInput" placeholder="Enter size (e.g. 50)" value="50" min="1">
+        <select id="unitSelect">
+          <option value="KB" selected>KB</option>
+          <option value="MB">MB</option>
         </select>
       </div>
 
-      <button class="btn btn-primary" id="downloadBtn" style="margin-top: auto;" disabled>Download Compressed Photo</button>
+      <button class="btn btn-primary" id="compressBtn" style="margin-top: 8px;" disabled>Compress Photo</button>
+
+      <div class="status-msg" id="statusMsg">Upload photo to start</div>
+
+      <button class="btn btn-primary" id="downloadBtn" style="margin-top: auto;" disabled>Download JPG Photo</button>
     </div>
 
     <!-- Preview Panel -->
@@ -252,13 +245,13 @@
       <div class="preview-grid">
         
         <div class="image-card">
-          <div class="section-title">Original Image</div>
+          <div class="section-title">Original Photo</div>
           <img id="originalImg" src="" style="display:none;" alt="Original">
           <div class="info-badge" id="origInfo">Size: <span>0 KB</span></div>
         </div>
 
         <div class="image-card">
-          <div class="section-title">Compressed Preview</div>
+          <div class="section-title">Compressed Preview (JPG)</div>
           <img id="compressedImg" src="" style="display:none;" alt="Compressed">
           <div class="info-badge" id="compInfo">Size: <span>0 KB</span></div>
         </div>
@@ -271,21 +264,20 @@
   <script>
     const imageInput = document.getElementById('imageInput');
     const uploadStatus = document.getElementById('uploadStatus');
-    const qualitySlider = document.getElementById('qualitySlider');
-    const scaleSlider = document.getElementById('scaleSlider');
-    const formatSelect = document.getElementById('formatSelect');
-    
-    const qualityVal = document.getElementById('qualityVal');
-    const scaleVal = document.getElementById('scaleVal');
-    
+    const targetSizeInput = document.getElementById('targetSizeInput');
+    const unitSelect = document.getElementById('unitSelect');
+    const compressBtn = document.getElementById('compressBtn');
+    const downloadBtn = document.getElementById('downloadBtn');
+    const statusMsg = document.getElementById('statusMsg');
+
     const originalImg = document.getElementById('originalImg');
     const compressedImg = document.getElementById('compressedImg');
     const origInfo = document.getElementById('origInfo');
     const compInfo = document.getElementById('compInfo');
-    const downloadBtn = document.getElementById('downloadBtn');
 
     let loadedImage = null;
     let originalFileSize = 0;
+    let compressedDataUrl = '';
 
     function formatBytes(bytes) {
       if (bytes === 0) return '0 KB';
@@ -301,7 +293,7 @@
 
       originalFileSize = file.size;
       uploadStatus.innerText = file.name;
-      
+
       const reader = new FileReader();
       reader.onload = (event) => {
         const img = new Image();
@@ -310,65 +302,104 @@
           originalImg.src = event.target.result;
           originalImg.style.display = 'block';
           origInfo.innerHTML = `Size: <span>${formatBytes(originalFileSize)}</span> (${img.width}x${img.height})`;
-          
-          downloadBtn.disabled = false;
-          processCompression();
+
+          compressBtn.disabled = false;
+          statusMsg.innerText = 'Ready to compress';
+          processAutoCompression();
         };
         img.src = event.target.result;
       };
       reader.readAsDataURL(file);
     });
 
-    function processCompression() {
+    compressBtn.addEventListener('click', () => {
+      processAutoCompression();
+    });
+
+    function processAutoCompression() {
       if (!loadedImage) return;
 
-      const quality = parseInt(qualitySlider.value) / 100;
-      const scale = parseInt(scaleSlider.value) / 100;
-      const format = formatSelect.value;
+      const targetVal = parseFloat(targetSizeInput.value) || 50;
+      const unit = unitSelect.value;
+      const targetSizeBytes = unit === 'MB' ? targetVal * 1024 * 1024 : targetVal * 1024;
 
-      qualityVal.innerText = `${qualitySlider.value}%`;
-      scaleVal.innerText = `${scaleSlider.value}%`;
+      statusMsg.innerText = 'Compressing...';
 
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
+      let minQuality = 0.01;
+      let maxQuality = 1.0;
+      let bestResult = null;
+      let currentScale = 1.0;
 
-      const targetWidth = Math.round(loadedImage.width * scale);
-      const targetHeight = Math.round(loadedImage.height * scale);
+      // First try quality reduction using Binary Search
+      for (let attempt = 0; attempt < 2; attempt++) {
+        minQuality = 0.01;
+        maxQuality = 1.0;
 
-      canvas.width = targetWidth;
-      canvas.height = targetHeight;
+        for (let i = 0; i < 8; i++) {
+          const midQuality = (minQuality + maxQuality) / 2;
+          const result = renderToJpg(loadedImage, currentScale, midQuality);
 
-      // Draw and Smooth Image
-      ctx.imageSmoothingEnabled = true;
-      ctx.imageSmoothingQuality = 'high';
-      ctx.drawImage(loadedImage, 0, 0, targetWidth, targetHeight);
+          if (result.size <= targetSizeBytes) {
+            bestResult = result;
+            minQuality = midQuality; // try higher quality if possible
+          } else {
+            maxQuality = midQuality; // lower quality needed
+          }
+        }
 
-      const compressedDataUrl = canvas.toDataURL(format, quality);
+        // If target size reached, stop
+        if (bestResult) break;
 
+        // If even lowest quality is larger than target, downscale image dimensions
+        currentScale *= 0.75;
+      }
+
+      // If still no result, render at lowest settings
+      if (!bestResult) {
+        bestResult = renderToJpg(loadedImage, 0.5, 0.05);
+      }
+
+      compressedDataUrl = bestResult.dataUrl;
       compressedImg.src = compressedDataUrl;
       compressedImg.style.display = 'block';
 
-      // Calculate base64 file size
-      const head = `data:${format};base64,`;
-      const sizeInBytes = Math.round((compressedDataUrl.length - head.length) * 3 / 4);
+      compInfo.innerHTML = `Size: <span>${formatBytes(bestResult.size)}</span> (${bestResult.width}x${bestResult.height})`;
+      statusMsg.innerText = `Compressed under ${targetVal} ${unit}!`;
 
-      const savings = Math.round(((originalFileSize - sizeInBytes) / originalFileSize) * 100);
-      const savingsText = savings > 0 ? ` [${savings}% Reduced]` : '';
-
-      compInfo.innerHTML = `Size: <span>${formatBytes(sizeInBytes)}</span>${savingsText}`;
+      downloadBtn.disabled = false;
     }
 
-    [qualitySlider, scaleSlider, formatSelect].forEach(el => {
-      el.addEventListener('input', processCompression);
-    });
+    function renderToJpg(img, scale, quality) {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+
+      const width = Math.max(10, Math.round(img.width * scale));
+      const height = Math.max(10, Math.round(img.height * scale));
+
+      canvas.width = width;
+      canvas.height = height;
+
+      // Fill white background for JPG (PNG transparency handle)
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(0, 0, width, height);
+
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+      ctx.drawImage(img, 0, 0, width, height);
+
+      const dataUrl = canvas.toDataURL('image/jpeg', quality);
+      const head = 'data:image/jpeg;base64,';
+      const size = Math.round((dataUrl.length - head.length) * 3 / 4);
+
+      return { dataUrl, size, width, height };
+    }
 
     downloadBtn.addEventListener('click', () => {
-      if (!compressedImg.src) return;
-      
-      const ext = formatSelect.value.split('/')[1];
+      if (!compressedDataUrl) return;
+
       const link = document.createElement('a');
-      link.download = `compressed_photo.${ext}`;
-      link.href = compressedImg.src;
+      link.download = 'compressed_photo.jpg';
+      link.href = compressedDataUrl;
       link.click();
     });
   </script>
