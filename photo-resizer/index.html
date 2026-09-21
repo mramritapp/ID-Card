@@ -159,6 +159,7 @@
       color: #FFFFFF;
     }
 
+    /* Original Image Details Card */
     .orig-details-card {
       background: rgba(0, 0, 0, 0.3);
       border: 1px solid var(--panel-border);
@@ -455,7 +456,6 @@
       const file = e.target.files[0];
       if (!file) return;
 
-      // Complete reset when selecting a new file
       resetApp();
 
       originalSizeBytes = file.size;
@@ -472,7 +472,6 @@
           origDim.innerText = `${img.width} x ${img.height} px`;
           origDetailsCard.style.display = 'flex';
 
-          // Show Original Image Preview directly upon upload
           mainPreviewImg.src = evt.target.result;
           placeholderText.style.display = 'none';
           previewDisplay.style.display = 'flex';
@@ -495,7 +494,6 @@
       const userValue = parseFloat(targetSize.value);
       const unit = sizeUnit.value;
 
-      // Validation 1: Blank or invalid input
       if (!userValue || userValue <= 0) {
         showError('Please enter a valid target size!');
         return;
@@ -503,7 +501,6 @@
 
       const targetBytes = unit === 'MB' ? userValue * 1024 * 1024 : userValue * 1024;
 
-      // Validation 2: Target size larger than or equal to original size
       if (targetBytes >= originalSizeBytes) {
         showError(`Target size must be smaller than original size (${formatBytes(originalSizeBytes)})!`);
         return;
@@ -517,7 +514,6 @@
       let bestResult = null;
       let scale = 1.0;
 
-      // Compression Binary Loop
       for (let pass = 0; pass < 2; pass++) {
         minQuality = 0.01;
         maxQuality = 0.98;
@@ -544,11 +540,11 @@
 
       finalCompressedDataUrl = bestResult.dataUrl;
 
-      // Update Preview with Compressed Result
       mainPreviewImg.src = finalCompressedDataUrl;
       previewStateBadge.innerText = 'Compressed View';
 
-      showSuccess(`Compressed under ${userValue} ${unit}!`);
+      // Display EXACT actual compressed size instead of dummy value
+      showSuccess(`Successfully Compressed to ${formatBytes(bestResult.size)}!`);
       downloadBtn.style.display = 'block';
     }
 
