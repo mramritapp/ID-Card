@@ -1,692 +1,703 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ID Card</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css">
-<style>
-  :root{
-    --orange: #FF8A50;
-    --blue: #5AA9FF;
-    --pink: #FF6FA5;
-    --green: #4FD98A;
-    --accent: var(--orange);
-    --accent-deep: #E1652A;
-    --ink: #F4F6FA;
-    --ink-soft: rgba(244,246,250,0.58);
-    --glass: rgba(255,255,255,0.07);
-    --glass-strong: rgba(255,255,255,0.11);
-    --glass-border: rgba(255,255,255,0.14);
-  }
-  *{box-sizing:border-box;}
-  html,body{margin:0;padding:0; height:100%;}
-  body{
-    background:#0B0E17;
-    color:var(--ink);
-    font-family:'Inter', system-ui, -apple-system, sans-serif;
-    height:100%;
-    overflow:hidden;
-    position:relative;
-  }
-  @media (max-height:700px), (max-width:860px){
-    html,body{ height:auto; overflow:auto; }
-  }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Professional ID Card Maker - Cyber Cafe Tools</title>
+  
+  <!-- Google Font: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- html2canvas & jsPDF for Ultra High Quality Export -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <!-- QRCode.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
-  .orb{ position:fixed; border-radius:50%; filter:blur(80px); opacity:0.38; z-index:0; will-change:transform; }
-  .orb1{ width:420px; height:420px; background:var(--orange); top:-100px; left:-100px; animation: float1 22s ease-in-out infinite; }
-  .orb2{ width:460px; height:460px; background:var(--blue); top:8%; right:-150px; animation: float2 26s ease-in-out infinite; }
-  .orb3{ width:400px; height:400px; background:var(--pink); bottom:-130px; left:6%; animation: float3 24s ease-in-out infinite; }
-  @keyframes float1{ 0%,100%{transform:translate(0,0);} 50%{transform:translate(30px,40px);} }
-  @keyframes float2{ 0%,100%{transform:translate(0,0);} 50%{transform:translate(-40px,30px);} }
-  @keyframes float3{ 0%,100%{transform:translate(0,0);} 50%{transform:translate(35px,-25px);} }
+  <style>
+    :root {
+      --accent: #FF6FA5;
+      --accent-hover: #ff5292;
+      --bg-dark: #0B0E17;
+      --card-bg: rgba(255, 255, 255, 0.07);
+      --card-border: rgba(255, 255, 255, 0.14);
+      --text-main: #FFFFFF;
+      --text-muted: #A0A5B5;
+      --id-primary: #1e3c72;
+      --id-secondary: #2a5298;
+    }
 
-  .wrap{
-    position:relative;
-    z-index:1;
-    max-width:980px;
-    height:100%;
-    margin:0 auto;
-    padding:18px 20px;
-    display:flex;
-    flex-direction:column;
-  }
-  @media (max-height:700px), (max-width:860px){
-    .wrap{ height:auto; min-height:100vh; padding:26px 20px 60px; }
-  }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Inter', sans-serif;
+    }
 
-  .layout{
-    display:grid;
-    grid-template-columns: 360px 1fr;
-    gap:20px;
-    align-items:stretch;
-    flex:1;
-    min-height:0;
-  }
-  @media (max-width: 860px){
-    .layout{ grid-template-columns: 1fr; align-items:start; }
-  }
-  .left-col{
-    display:flex;
-    flex-direction:column;
-    justify-content:center;
-    gap:14px;
-    min-height:0;
-  }
-  .right-col{ min-height:0; }
-  @media (max-width: 860px){
-    .right-col{ min-height:340px; }
-  }
+    body {
+      width: 100vw;
+      min-height: 100vh;
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      overflow-x: hidden;
+    }
 
-  .topbar{ display:flex; align-items:center; gap:14px; margin-bottom:16px; flex-shrink:0; }
-  .home-pill{
-    display:inline-block;
-    text-decoration:none;
-    font-size:0.78rem;
-    font-weight:600;
-    color:var(--ink);
-    background:var(--glass);
-    border:1px solid var(--glass-border);
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-    padding:7px 14px;
-    border-radius:999px;
-    flex-shrink:0;
-  }
-  h1.page-title{
-    font-size:1.3rem;
-    font-weight:700;
-    letter-spacing:-0.02em;
-    margin:0;
-  }
+    /* Background Orbs */
+    .orb {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(90px);
+      z-index: 0;
+      pointer-events: none;
+      animation: float 18s ease-in-out infinite alternate;
+    }
+    .orb-1 {
+      width: 350px;
+      height: 350px;
+      background: rgba(255, 111, 165, 0.22);
+      top: -80px;
+      left: -80px;
+    }
+    .orb-2 {
+      width: 420px;
+      height: 420px;
+      background: rgba(90, 169, 255, 0.18);
+      bottom: -100px;
+      right: -80px;
+      animation-delay: -6s;
+    }
 
-  /* ---- Upload tiles: shaped like the card itself ---- */
-  .upload-grid{
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:12px;
-    flex-shrink:0;
-  }
-  .upload-box{
-    position:relative;
-    aspect-ratio: 85.6 / 54;
-    border-radius:16px;
-    border:1.5px dashed var(--glass-border);
-    background:var(--glass);
-    backdrop-filter: blur(20px) saturate(160%);
-    -webkit-backdrop-filter: blur(20px) saturate(160%);
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    justify-content:center;
-    gap:6px;
-    cursor:pointer;
-    overflow:hidden;
-    transition: border-color .15s ease, background .15s ease;
-  }
-  .upload-box:hover{ border-color:var(--accent); }
-  .upload-box.filled{ border-style:solid; border-color:transparent; cursor:default; }
-  .upload-box input{ position:absolute; inset:0; opacity:0; cursor:pointer; z-index:1; }
-  .upload-box .plus{
-    font-size:1.4rem;
-    color:var(--ink-soft);
-    line-height:1;
-  }
-  .upload-box .lbl{
-    font-size:0.82rem;
-    font-weight:600;
-    color:var(--ink);
-  }
-  .upload-box img.thumb{
-    position:absolute;
-    inset:0;
-    width:100%;
-    height:100%;
-    object-fit:cover;
-  }
-  .upload-box.filled .lbl{
-    position:absolute;
-    left:8px;
-    bottom:8px;
-    z-index:2;
-    background:rgba(0,0,0,0.55);
-    backdrop-filter: blur(6px);
-    padding:3px 9px;
-    border-radius:999px;
-    font-size:0.68rem;
-  }
-  .recrop-btn{
-    position:absolute;
-    top:8px;
-    right:8px;
-    z-index:2;
-    font-size:0.68rem;
-    font-weight:700;
-    color:#fff;
-    background:rgba(0,0,0,0.55);
-    backdrop-filter: blur(6px);
-    border:none;
-    border-radius:999px;
-    padding:5px 10px;
-    cursor:pointer;
-  }
+    @keyframes float {
+      0% { transform: translate(0, 0) scale(1); }
+      100% { transform: translate(30px, 40px) scale(1.08); }
+    }
 
-  /* ---- Controls card ---- */
-  .controls-card{
-    background:var(--glass);
-    border:1px solid var(--glass-border);
-    backdrop-filter: blur(22px) saturate(160%);
-    -webkit-backdrop-filter: blur(22px) saturate(160%);
-    border-radius:18px;
-    padding:16px;
-    box-shadow: inset 0 1px 0 rgba(255,255,255,0.1);
-    flex-shrink:0;
-  }
-  fieldset{ border:none; padding:0; margin:0 0 16px; }
-  .toggle-row{
-    display:flex;
-    gap:4px;
-    background:rgba(0,0,0,0.2);
-    padding:4px;
-    border-radius:12px;
-  }
-  .toggle-btn{
-    flex:1;
-    padding:8px 6px;
-    border-radius:9px;
-    border:none;
-    background:transparent;
-    font-size:0.8rem;
-    font-weight:600;
-    color:var(--ink-soft);
-    cursor:pointer;
-  }
-  .toggle-btn.active{
-    background:linear-gradient(155deg, var(--accent), var(--accent-deep));
-    color:#fff;
-  }
+    header {
+      position: relative;
+      z-index: 10;
+      height: 60px;
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--card-border);
+      background: rgba(11, 14, 23, 0.7);
+      backdrop-filter: blur(12px);
+    }
 
-  .slider-row{ display:flex; gap:16px; }
-  .slider-block{ flex:1; }
-  .slider-label{
-    display:flex; justify-content:space-between;
-    font-size:0.76rem; margin-bottom:6px; color:var(--ink-soft);
-  }
-  .slider-label span.val{ color:var(--accent); font-weight:700; }
-  input[type="range"]{ width:100%; accent-color:var(--accent); }
+    .home-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      color: var(--text-main);
+      text-decoration: none;
+      font-size: 0.88rem;
+      font-weight: 500;
+      backdrop-filter: blur(16px);
+      transition: all 0.2s ease;
+    }
+    .home-btn:hover {
+      background: rgba(255, 255, 255, 0.15);
+    }
 
-  /* ---- Preview ---- */
-  .preview-shell{
-    display:flex; align-items:center; justify-content:center;
-    padding:20px;
-    background:var(--glass);
-    border:1px solid var(--glass-border);
-    backdrop-filter: blur(22px) saturate(160%);
-    -webkit-backdrop-filter: blur(22px) saturate(160%);
-    border-radius:18px;
-    height:100%;
-    container-type: size;
-  }
-  @media (max-width: 860px){
-    .preview-shell{ height:340px; }
-  }
-  #a4sheet{
-    background:#fff;
-    aspect-ratio: 210 / 297;
-    height: min(100cqh, calc(100cqw * 297 / 210));
-    width: auto;
-    position:relative;
-    box-shadow:0 16px 44px rgba(0,0,0,0.55);
-    flex-shrink:0;
-  }
-  .card-img{ position:absolute; object-fit:contain; background:#fff; }
-  .card-img.empty-slot{
-    border:1.5px dashed #C4CAC3;
-    display:flex; align-items:center; justify-content:center;
-    font-size:0.6rem; color:#A6ACA4; text-align:center; padding:4px;
-  }
+    .app-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+    }
+    .app-title span {
+      color: var(--accent);
+    }
 
-  /* ---- Download ---- */
-  .download-row{ display:flex; gap:10px; flex-shrink:0; }
-  .btn{
-    flex:1;
-    padding:13px;
-    border-radius:13px;
-    border:none;
-    font-weight:700;
-    font-size:0.85rem;
-    cursor:pointer;
-  }
-  .btn-primary{
-    background:linear-gradient(155deg, var(--accent), var(--accent-deep));
-    color:#fff;
-    box-shadow:0 8px 20px rgba(255,138,80,0.3);
-  }
-  .btn-outline{
-    background:var(--glass);
-    border:1.5px solid var(--glass-border);
-    color:var(--ink);
-  }
-  .btn:disabled{ opacity:0.35; cursor:not-allowed; }
+    .main-container {
+      position: relative;
+      z-index: 5;
+      padding: 24px;
+      display: grid;
+      grid-template-columns: 380px 1fr;
+      gap: 24px;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
 
-  .status-msg{
-    text-align:center;
-    font-size:0.78rem;
-    color:var(--accent);
-    margin-top:12px;
-    display:none;
-  }
-  .status-msg.show{ display:block; }
+    .glass-panel {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      backdrop-filter: blur(22px) saturate(160%);
+      border-radius: 16px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
 
-  /* ---- Crop modal ---- */
-  .crop-modal{
-    position:fixed; inset:0; background:rgba(5,7,12,0.8);
-    display:none; align-items:center; justify-content:center; z-index:1000; padding:16px;
-  }
-  .crop-modal.show{ display:flex; }
-  .crop-modal-inner{
-    background:rgba(20,24,36,0.88);
-    border:1px solid var(--glass-border);
-    backdrop-filter: blur(26px) saturate(160%);
-    -webkit-backdrop-filter: blur(26px) saturate(160%);
-    border-radius:18px;
-    padding:16px;
-    width:100%; max-width:480px; max-height:92vh;
-    display:flex; flex-direction:column;
-    box-shadow:0 24px 60px rgba(0,0,0,0.5);
-  }
-  .crop-title{
-    font-size:0.85rem; font-weight:600; margin:0 0 12px; color:var(--ink);
-    text-align:center;
-  }
-  .crop-img-wrap{ height:56vh; max-height:440px; overflow:hidden; background:#111; border-radius:12px; }
-  .crop-img-wrap img{ display:block; max-width:100%; max-height:100%; }
-  .crop-actions{ display:flex; gap:10px; margin-top:14px; }
-  .crop-actions .btn{ margin:0; }
+    .panel-heading {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
 
-  .cropper-view-box{ outline: 2px solid #2B5D48 !important; outline-color: #2B5D48 !important; }
-  .cropper-line{ background-color: #2B5D48 !important; opacity: 0.9 !important; }
-  .cropper-dashed{ border-color: #E1341E !important; opacity: 0.85 !important; }
-  .cropper-point{
-    background-color: #ffffff !important; border: 2px solid #2B5D48 !important;
-    width: 10px !important; height: 10px !important; opacity: 1 !important;
-  }
-  .cropper-point.point-se{ width: 12px !important; height: 12px !important; }
-  .cropper-center::before, .cropper-center::after{ background-color: #E1341E !important; }
-  .cropper-face{ background-color: rgba(43,93,72,0.05) !important; }
-  .crop-img-wrap,
-  .crop-img-wrap .cropper-container,
-  .crop-img-wrap .cropper-canvas,
-  .crop-img-wrap .cropper-wrap-box,
-  .crop-img-wrap .cropper-drag-box,
-  .crop-img-wrap .cropper-face{
-    cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='30' height='30' viewBox='0 0 30 30'><path d='M5 3 L5 25 L10.5 20 L14 27.5 L18 25.5 L14.5 18.5 L22 18.5 Z' fill='%232B5D48' stroke='white' stroke-width='2.2' stroke-linejoin='round' stroke-linecap='round'/></svg>") 5 3, auto !important;
-  }
-</style>
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .form-group label {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+    .text-input, select {
+      width: 100%;
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 10px 12px;
+      color: #fff;
+      font-size: 0.88rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .text-input:focus, select:focus {
+      border-color: var(--accent);
+    }
+
+    .file-input-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      border: 2px dashed rgba(255, 111, 165, 0.4);
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.02);
+      cursor: pointer;
+      text-align: center;
+      transition: border-color 0.2s;
+    }
+    .file-input-wrapper:hover {
+      border-color: var(--accent);
+    }
+    .file-input-wrapper input[type="file"] {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      cursor: pointer;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 10px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      background: var(--accent);
+      color: #0B0E17;
+      transition: all 0.2s ease;
+      margin-top: 8px;
+    }
+    .btn:hover {
+      background: var(--accent-hover);
+      box-shadow: 0 0 15px rgba(255, 111, 165, 0.4);
+    }
+
+    /* ID Card Preview Styles */
+    .preview-stage {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 30px;
+    }
+
+    .card-pair {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 30px;
+      justify-content: center;
+    }
+
+    /* Standard CR80 ID Card Aspect Ratio (85.6mm x 53.9mm) ~ 3.375 x 2.125 inches */
+    .id-card-frame {
+      width: 320px;
+      height: 480px;
+      border-radius: 16px;
+      background: #ffffff;
+      color: #333333;
+      position: relative;
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      user-select: none;
+    }
+
+    /* Front Card Design */
+    .card-header-bg {
+      background: linear-gradient(135deg, var(--id-primary), var(--id-secondary));
+      color: #ffffff;
+      padding: 20px 16px 45px 16px;
+      text-align: center;
+      position: relative;
+    }
+    .card-header-bg h3 {
+      font-size: 1.05rem;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+    .card-header-bg p {
+      font-size: 0.68rem;
+      opacity: 0.85;
+      margin-top: 2px;
+    }
+
+    .photo-wrapper {
+      width: 110px;
+      height: 125px;
+      border-radius: 10px;
+      border: 4px solid #ffffff;
+      background: #e2e8f0;
+      position: absolute;
+      bottom: -55px;
+      left: 50%;
+      transform: translateX(-50%);
+      overflow: hidden;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .photo-wrapper img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .card-body-front {
+      margin-top: 60px;
+      padding: 12px 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      flex: 1;
+    }
+    .holder-name {
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: #1e293b;
+    }
+    .holder-role {
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--id-primary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 12px;
+    }
+
+    .info-table {
+      width: 100%;
+      font-size: 0.75rem;
+      border-collapse: collapse;
+      margin-top: 4px;
+    }
+    .info-table td {
+      padding: 4px 0;
+      text-align: left;
+    }
+    .info-table td.label {
+      font-weight: 600;
+      color: #64748b;
+      width: 35%;
+    }
+    .info-table td.val {
+      font-weight: 700;
+      color: #0f172a;
+    }
+
+    .card-footer-front {
+      background: linear-gradient(135deg, var(--id-primary), var(--id-secondary));
+      height: 12px;
+      width: 100%;
+    }
+
+    /* Back Card Design */
+    .card-back-body {
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      height: 100%;
+    }
+    .back-header {
+      border-bottom: 2px solid var(--id-primary);
+      padding-bottom: 6px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--id-primary);
+      text-transform: uppercase;
+    }
+
+    .back-info {
+      font-size: 0.72rem;
+      color: #334155;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .back-info p {
+      line-height: 1.3;
+    }
+    .back-info strong {
+      color: #0f172a;
+    }
+
+    .qr-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      margin: 10px 0;
+    }
+    #qrcode img {
+      border: 4px solid #fff;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .sign-section {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin-top: 10px;
+    }
+    .sign-box {
+      text-align: center;
+      font-size: 0.65rem;
+      color: #64748b;
+    }
+    .sign-line {
+      width: 90px;
+      border-top: 1px solid #94a3b8;
+      margin-bottom: 4px;
+    }
+
+    @media (max-width: 880px) {
+      .main-container {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
 </head>
 <body>
-<div class="orb orb1"></div>
-<div class="orb orb2"></div>
-<div class="orb orb3"></div>
 
-<div class="wrap">
-  <div class="topbar">
-    <a href="/" class="home-pill">← Home</a>
-    <h1 class="page-title">ID Card</h1>
-  </div>
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
 
-  <div class="layout">
-    <div class="left-col">
-      <div class="upload-grid">
-        <label class="upload-box" id="frontBox">
-          <input type="file" accept="image/*" id="frontInput">
-          <span class="plus">+</span>
-          <span class="lbl">Front</span>
-        </label>
-        <label class="upload-box" id="backBox">
-          <input type="file" accept="image/*" id="backInput">
-          <span class="plus">+</span>
-          <span class="lbl">Back</span>
-        </label>
+  <header>
+    <a href="../index.html" class="home-btn">← Home</a>
+    <div class="app-title">ID Card <span>Maker</span></div>
+  </header>
+
+  <div class="main-container">
+    
+    <!-- Controls Panel -->
+    <div class="glass-panel">
+      <div class="panel-heading">Card Details</div>
+
+      <div class="form-group">
+        <label>Theme Color</label>
+        <select id="themeSelect">
+          <option value="navy" selected>Classic Navy Blue</option>
+          <option value="emerald">Emerald Green</option>
+          <option value="maroon">Royal Maroon</option>
+          <option value="dark">Modern Dark</option>
+        </select>
       </div>
 
-      <div class="controls-card">
-        <fieldset>
-          <div class="toggle-row">
-            <button class="toggle-btn active" data-layout="side">Side by Side</button>
-            <button class="toggle-btn" data-layout="stack">Stacked</button>
-          </div>
-        </fieldset>
+      <div class="form-group">
+        <label>Organization / School Name</label>
+        <input type="text" id="orgName" class="text-input" value="GLOBAL TECH INSTITUTE">
+      </div>
 
-        <div class="slider-row">
-          <div class="slider-block">
-            <div class="slider-label"><span>Width</span><span class="val" id="widthVal">85 mm</span></div>
-            <input type="range" id="widthSlider" min="40" max="130" value="85">
-          </div>
-          <div class="slider-block">
-            <div class="slider-label"><span>Gap</span><span class="val" id="gapVal">8 mm</span></div>
-            <input type="range" id="gapSlider" min="0" max="40" value="8">
-          </div>
+      <div class="form-group">
+        <label>Tagline / Subtitle</label>
+        <input type="text" id="orgSub" class="text-input" value="Excellence in Education">
+      </div>
+
+      <div class="form-group">
+        <label>Holder Photo</label>
+        <div class="file-input-wrapper">
+          <span style="font-size: 0.85rem; color: var(--text-muted);" id="photoFileName">Upload Passport Photo</span>
+          <input type="file" id="photoInput" accept="image/*">
         </div>
       </div>
 
-      <div class="download-row">
-        <button class="btn btn-primary" id="downloadImg" disabled>Download JPG</button>
-        <button class="btn btn-outline" id="downloadPdf" disabled>Download PDF</button>
+      <div class="form-group">
+        <label>Full Name</label>
+        <input type="text" id="holderName" class="text-input" value="Rahul Sharma">
       </div>
-      <p class="status-msg" id="statusMsg"></p>
+
+      <div class="form-group">
+        <label>Designation / Role</label>
+        <input type="text" id="holderRole" class="text-input" value="Senior Software Engineer">
+      </div>
+
+      <div class="form-group">
+        <label>ID / Roll Number</label>
+        <input type="text" id="holderId" class="text-input" value="GTI-2026-894">
+      </div>
+
+      <div class="form-group">
+        <label>Blood Group</label>
+        <input type="text" id="holderBlood" class="text-input" value="O+">
+      </div>
+
+      <div class="form-group">
+        <label>Mobile Number</label>
+        <input type="text" id="holderPhone" class="text-input" value="+91 98765 43210">
+      </div>
+
+      <div class="form-group">
+        <label>Emergency Address</label>
+        <input type="text" id="holderAddress" class="text-input" value="Plot 42, Tech Park, Sector 62, Noida, UP">
+      </div>
+
+      <button class="btn" id="downloadPdfBtn">Download HD PDF (Front & Back)</button>
     </div>
 
-    <div class="right-col">
-      <div class="preview-shell">
-        <div id="a4sheet"></div>
+    <!-- Live Preview Stage -->
+    <div class="glass-panel preview-stage">
+      <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
+        <div class="panel-heading">Live HD Preview</div>
+        <div style="font-size: 0.78rem; color: var(--text-muted);">Standard CR80 Size</div>
+      </div>
+
+      <div class="card-pair">
+        
+        <!-- FRONT CARD -->
+        <div class="id-card-frame" id="cardFront">
+          <div class="card-header-bg">
+            <h3 id="prevOrgName">GLOBAL TECH INSTITUTE</h3>
+            <p id="prevOrgSub">Excellence in Education</p>
+            <div class="photo-wrapper">
+              <img id="prevPhoto" src="https://via.placeholder.com/150?text=Photo" alt="Profile Photo">
+            </div>
+          </div>
+
+          <div class="card-body-front">
+            <div class="holder-name" id="prevHolderName">Rahul Sharma</div>
+            <div class="holder-role" id="prevHolderRole">Senior Software Engineer</div>
+
+            <table class="info-table">
+              <tr>
+                <td class="label">ID NO:</td>
+                <td class="val" id="prevHolderId">GTI-2026-894</td>
+              </tr>
+              <tr>
+                <td class="label">BLOOD:</td>
+                <td class="val" id="prevHolderBlood">O+</td>
+              </tr>
+              <tr>
+                <td class="label">PHONE:</td>
+                <td class="val" id="prevHolderPhone">+91 98765 43210</td>
+              </tr>
+            </table>
+          </div>
+
+          <div class="card-footer-front"></div>
+        </div>
+
+        <!-- BACK CARD -->
+        <div class="id-card-frame" id="cardBack">
+          <div class="card-back-body">
+            <div>
+              <div class="back-header">Terms & Details</div>
+              <div class="back-info" style="margin-top: 10px;">
+                <p><strong>Address:</strong> <span id="prevHolderAddress">Plot 42, Tech Park, Sector 62, Noida, UP</span></p>
+                <p><strong>Property Notice:</strong> This card is the property of <span id="prevOrgNotice">GLOBAL TECH INSTITUTE</span>. If found, please return to the office address.</p>
+              </div>
+            </div>
+
+            <div class="qr-container">
+              <div id="qrcode"></div>
+              <span style="font-size: 0.6rem; color: #64748b; font-weight: 600;">SCAN FOR VERIFICATION</span>
+            </div>
+
+            <div class="sign-section">
+              <div class="sign-box">
+                <div class="sign-line"></div>
+                Cardholder Sign
+              </div>
+              <div class="sign-box">
+                <div class="sign-line"></div>
+                Auth. Signatory
+              </div>
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
+
   </div>
-</div>
 
-<div class="crop-modal" id="cropModal">
-  <div class="crop-modal-inner">
-    <p class="crop-title">Crop to the card</p>
-    <div class="crop-img-wrap">
-      <img id="cropperImage" src="">
-    </div>
-    <div class="crop-actions">
-      <button class="btn btn-outline" id="cropCancel">Cancel</button>
-      <button class="btn btn-primary" id="cropConfirm">Save</button>
-    </div>
-  </div>
-</div>
+  <script>
+    // Elements
+    const orgName = document.getElementById('orgName');
+    const orgSub = document.getElementById('orgSub');
+    const photoInput = document.getElementById('photoInput');
+    const photoFileName = document.getElementById('photoFileName');
+    const holderName = document.getElementById('holderName');
+    const holderRole = document.getElementById('holderRole');
+    const holderId = document.getElementById('holderId');
+    const holderBlood = document.getElementById('holderBlood');
+    const holderPhone = document.getElementById('holderPhone');
+    const holderAddress = document.getElementById('holderAddress');
+    const themeSelect = document.getElementById('themeSelect');
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js"></script>
-<script>
-(function(){
-  const sheet = document.getElementById('a4sheet');
-  // Preview size is read live from the rendered element instead of a fixed
-  // constant, so the sheet can be sized responsively by CSS (to fit the
-  // viewport) and all the mm math still comes out correct.
-  const RATIO = 54 / 85.6; // height/width of standard ID card
-  const PAGE_W_MM = 210, PAGE_H_MM = 297, MARGIN_MM = 4;
-  const USABLE_W = PAGE_W_MM - 2*MARGIN_MM;
-  const USABLE_H = PAGE_H_MM - 2*MARGIN_MM;
+    // Previews
+    const prevOrgName = document.getElementById('prevOrgName');
+    const prevOrgSub = document.getElementById('prevOrgSub');
+    const prevOrgNotice = document.getElementById('prevOrgNotice');
+    const prevPhoto = document.getElementById('prevPhoto');
+    const prevHolderName = document.getElementById('prevHolderName');
+    const prevHolderRole = document.getElementById('prevHolderRole');
+    const prevHolderId = document.getElementById('prevHolderId');
+    const prevHolderBlood = document.getElementById('prevHolderBlood');
+    const prevHolderPhone = document.getElementById('prevHolderPhone');
+    const prevHolderAddress = document.getElementById('prevHolderAddress');
 
-  let frontSrc = null, backSrc = null;       // cropped, final images used in layout
-  let frontOriginal = null, backOriginal = null; // uncropped uploads, kept for re-crop
-  let layout = 'side';
-  let widthMM = 85;
-  let gapMM = 8;
-  let cropper = null;
-  let pendingWhich = null;
-
-  const frontBox = document.getElementById('frontBox');
-  const backBox = document.getElementById('backBox');
-  const widthSlider = document.getElementById('widthSlider');
-  const gapSlider = document.getElementById('gapSlider');
-  const widthVal = document.getElementById('widthVal');
-  const gapVal = document.getElementById('gapVal');
-
-  function wireUploadInput(input, which){
-    input.addEventListener('change', (e)=>{
-      const file = e.target.files[0];
-      if(!file) return;
-      const reader = new FileReader();
-      reader.onload = (ev)=>{
-        if(which==='front') frontOriginal = ev.target.result;
-        else backOriginal = ev.target.result;
-        openCropModal(ev.target.result, which);
-      };
-      reader.readAsDataURL(file);
-    });
-  }
-  wireUploadInput(document.getElementById('frontInput'), 'front');
-  wireUploadInput(document.getElementById('backInput'), 'back');
-
-  function rebuildBox(box, which, dataUrl){
-    box.classList.add('filled');
-    box.innerHTML = '';
-    const img = document.createElement('img');
-    img.src = dataUrl;
-    img.className = 'thumb';
-    box.appendChild(img);
-    const lbl = document.createElement('span');
-    lbl.className = 'lbl';
-    lbl.textContent = (which==='front' ? 'Front ✓' : 'Back ✓');
-    box.appendChild(lbl);
-    const recrop = document.createElement('button');
-    recrop.type = 'button';
-    recrop.className = 'recrop-btn';
-    recrop.textContent = 'Recrop';
-    recrop.addEventListener('click', (ev)=>{
-      ev.preventDefault();
-      ev.stopPropagation();
-      const original = which==='front' ? frontOriginal : backOriginal;
-      openCropModal(original, which);
-    });
-    box.appendChild(recrop);
-    // also allow uploading a fresh photo again
-    const freshInput = document.createElement('input');
-    freshInput.type = 'file';
-    freshInput.accept = 'image/*';
-    freshInput.style.position='absolute';
-    freshInput.style.inset='0';
-    freshInput.style.opacity='0';
-    freshInput.style.cursor='pointer';
-    freshInput.style.zIndex='1';
-    wireUploadInput(freshInput, which);
-    box.appendChild(freshInput);
-  }
-
-  // ---- Crop modal logic ----
-  const cropModal = document.getElementById('cropModal');
-  const cropperImage = document.getElementById('cropperImage');
-
-  function openCropModal(dataUrl, which){
-    pendingWhich = which;
-    // destroy any previous instance BEFORE touching the image src, so the
-    // old injected canvas/wrapper never overlaps with the new one
-    if(cropper){ cropper.destroy(); cropper = null; }
-    cropModal.classList.add('show');
-    cropperImage.removeAttribute('style');
-    cropperImage.src = dataUrl;
-    cropperImage.onload = function(){
-      // wait two frames so the modal has finished laying out at full size
-      // before Cropper measures the container — this is what was causing
-      // the crop box to glitch/jump on open
-      requestAnimationFrame(function(){
-        requestAnimationFrame(function(){
-          cropper = new Cropper(cropperImage, {
-            aspectRatio: 85.6/54,
-            viewMode: 1,
-            autoCropArea: 0.9,
-            background: false,
-            checkOrientation: true,
-            movable: true,
-            zoomable: true,
-            scalable: false,
-            rotatable: false,
-            guides: true
-          });
-        });
+    // QR Code Generator
+    let qrCodeObj = null;
+    function updateQRCode() {
+      const qrData = `ID: ${holderId.value} | Name: ${holderName.value} | Phone: ${holderPhone.value}`;
+      const qrContainer = document.getElementById('qrcode');
+      qrContainer.innerHTML = '';
+      qrCodeObj = new QRCode(qrContainer, {
+        text: qrData,
+        width: 80,
+        height: 80,
+        colorDark : "#0f172a",
+        colorLight : "#ffffff",
+        correctLevel : QRCode.CorrectLevel.H
       });
-    };
-  }
-
-  function closeCropModal(){
-    cropModal.classList.remove('show');
-    if(cropper){ cropper.destroy(); cropper = null; }
-  }
-
-  document.getElementById('cropCancel').addEventListener('click', ()=>{
-    closeCropModal();
-  });
-
-  document.getElementById('cropConfirm').addEventListener('click', ()=>{
-    if(!cropper) return;
-    // getCroppedCanvas without forcing width/height keeps native resolution -> no quality loss
-    const canvas = cropper.getCroppedCanvas({ imageSmoothingQuality: 'high' });
-    // JPEG at 0.95 is visually indistinguishable from the original photo but
-    // keeps file size sane — PNG on real photos barely compresses at all
-    // and was inflating every file to tens of MB
-    const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
-    if(pendingWhich === 'front'){
-      frontSrc = dataUrl;
-      rebuildBox(frontBox, 'front', dataUrl);
-    } else {
-      backSrc = dataUrl;
-      rebuildBox(backBox, 'back', dataUrl);
     }
-    closeCropModal();
-    clampAndRender();
-    updateButtons();
-  });
 
-  // ---- Layout toggle ----
-  document.querySelectorAll('.toggle-btn').forEach(btn=>{
-    btn.addEventListener('click', ()=>{
-      document.querySelectorAll('.toggle-btn').forEach(b=>b.classList.remove('active'));
-      btn.classList.add('active');
-      layout = btn.dataset.layout;
-      clampAndRender();
+    // Dynamic Binding
+    orgName.addEventListener('input', () => {
+      prevOrgName.innerText = orgName.value || 'ORGANIZATION NAME';
+      prevOrgNotice.innerText = orgName.value || 'ORGANIZATION';
     });
-  });
-
-  widthSlider.addEventListener('input', ()=>{
-    widthMM = parseInt(widthSlider.value);
-    clampAndRender();
-  });
-  gapSlider.addEventListener('input', ()=>{
-    gapMM = parseInt(gapSlider.value);
-    clampAndRender();
-  });
-
-  function mmToPx(mm, mmPerPx){ return mm / mmPerPx; }
-
-  // Keeps card size + gap inside the printable A4 area, whichever layout is active
-  function clampAndRender(){
-    let maxW;
-    if(layout === 'side'){
-      maxW = Math.floor((USABLE_W - gapMM) / 2);
-    } else {
-      maxW = Math.min(USABLE_W, Math.floor(USABLE_H / (2*RATIO) - (gapMM/(2*RATIO))));
-    }
-    maxW = Math.max(40, Math.min(130, maxW));
-    widthSlider.max = maxW;
-    if(widthMM > maxW){ widthMM = maxW; widthSlider.value = maxW; }
-
-    let maxGap;
-    if(layout === 'side'){
-      maxGap = Math.floor(USABLE_W - (widthMM*2));
-    } else {
-      maxGap = Math.floor(USABLE_H - (widthMM*RATIO*2));
-    }
-    maxGap = Math.max(0, Math.min(40, maxGap));
-    gapSlider.max = maxGap;
-    if(gapMM > maxGap){ gapMM = maxGap; gapSlider.value = maxGap; }
-
-    widthVal.textContent = widthMM + ' mm';
-    gapVal.textContent = gapMM + ' mm';
-
-    renderPreview();
-  }
-
-  function renderPreview(){
-    sheet.innerHTML = '';
-    const dims = sheet.getBoundingClientRect(); // actual on-screen size, set by CSS
-    const mmPerPx = 210 / dims.width;
-    const cardWpx = mmToPx(widthMM, mmPerPx);
-    const cardHpx = cardWpx * RATIO;
-    const gapPx = mmToPx(gapMM, mmPerPx);
-
-    let totalW, totalH;
-    if(layout === 'side'){
-      totalW = cardWpx*2 + gapPx;
-      totalH = cardHpx;
-    } else {
-      totalW = cardWpx;
-      totalH = cardHpx*2 + gapPx;
-    }
-
-    const startX = (dims.width - totalW)/2;
-    const startY = (dims.height - totalH)/2;
-
-    function makeSlot(src, x, y, w, h, label){
-      const el = document.createElement(src ? 'img' : 'div');
-      el.className = 'card-img' + (src ? '' : ' empty-slot');
-      el.style.left = x+'px';
-      el.style.top = y+'px';
-      el.style.width = w+'px';
-      el.style.height = h+'px';
-      if(src) el.src = src;
-      else el.textContent = label;
-      sheet.appendChild(el);
-    }
-
-    if(layout==='side'){
-      makeSlot(frontSrc, startX, startY, cardWpx, cardHpx, 'Front');
-      makeSlot(backSrc, startX+cardWpx+gapPx, startY, cardWpx, cardHpx, 'Back');
-    } else {
-      makeSlot(frontSrc, startX, startY, cardWpx, cardHpx, 'Front');
-      makeSlot(backSrc, startX, startY+cardHpx+gapPx, cardWpx, cardHpx, 'Back');
-    }
-  }
-  clampAndRender();
-  window.addEventListener('resize', clampAndRender);
-
-  function updateButtons(){
-    const ready = frontSrc && backSrc;
-    document.getElementById('downloadImg').disabled = !ready;
-    document.getElementById('downloadPdf').disabled = !ready;
-  }
-
-  function showStatus(msg){
-    const s = document.getElementById('statusMsg');
-    s.textContent = msg;
-    s.classList.add('show');
-    setTimeout(()=>{ s.classList.remove('show'); }, 3500);
-  }
-
-  // Render the A4 sheet at true print resolution (300 DPI) so quality never degrades
-  async function renderHighResCanvas(){
-    const currentW = sheet.getBoundingClientRect().width; // read live, not a fixed constant
-    const dpiScale = (300 / 25.4) / (currentW / PAGE_W_MM); // scale factor to reach 300 DPI
-    return await html2canvas(sheet, {
-      scale: dpiScale,
-      backgroundColor: '#ffffff',
-      useCORS: true,
-      imageTimeout: 0
+    orgSub.addEventListener('input', () => prevOrgSub.innerText = orgSub.value);
+    holderName.addEventListener('input', () => {
+      prevHolderName.innerText = holderName.value || 'Full Name';
+      updateQRCode();
     });
-  }
+    holderRole.addEventListener('input', () => prevHolderRole.innerText = holderRole.value);
+    holderId.addEventListener('input', () => {
+      prevHolderId.innerText = holderId.value;
+      updateQRCode();
+    });
+    holderBlood.addEventListener('input', () => prevHolderBlood.innerText = holderBlood.value);
+    holderPhone.addEventListener('input', () => {
+      prevHolderPhone.innerText = holderPhone.value;
+      updateQRCode();
+    });
+    holderAddress.addEventListener('input', () => prevHolderAddress.innerText = holderAddress.value);
 
-  // JPEG at high quality (0.95) keeps the print crisp while matching normal
-  // photo file sizes — PNG was re-encoding every pixel losslessly, which
-  // blows up to tens of MB on real photos with natural noise/detail.
-  document.getElementById('downloadImg').addEventListener('click', async ()=>{
-    showStatus('Preparing...');
-    const canvas = await renderHighResCanvas();
-    const link = document.createElement('a');
-    link.download = 'id-card-a4.jpg';
-    link.href = canvas.toDataURL('image/jpeg', 0.95);
-    link.click();
-    showStatus('Image downloaded.');
-  });
+    // Photo Upload Handling
+    photoInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        photoFileName.innerText = file.name;
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          prevPhoto.src = event.target.result;
+        };
+        reader.readAsDataURL(file);
+      }
+    });
 
-  document.getElementById('downloadPdf').addEventListener('click', async ()=>{
-    showStatus('Preparing PDF...');
-    const canvas = await renderHighResCanvas();
-    const imgData = canvas.toDataURL('image/jpeg', 0.95);
-    const { jsPDF } = window.jspdf;
-    const pdf = new jsPDF({unit:'mm', format:'a4', compress:true});
-    pdf.addImage(imgData, 'JPEG', 0, 0, 210, 297);
-    pdf.save('id-card-a4.pdf');
-    showStatus('PDF downloaded.');
-  });
+    // Theme Switcher
+    themeSelect.addEventListener('change', () => {
+      const theme = themeSelect.value;
+      let primary = '#1e3c72', secondary = '#2a5298';
+      
+      if (theme === 'emerald') {
+        primary = '#059669'; secondary = '#10b981';
+      } else if (theme === 'maroon') {
+        primary = '#881337'; secondary = '#be123c';
+      } else if (theme === 'dark') {
+        primary = '#0f172a'; secondary = '#334155';
+      }
 
-})();
-</script>
+      document.documentElement.style.setProperty('--id-primary', primary);
+      document.documentElement.style.setProperty('--id-secondary', secondary);
+    });
+
+    // Initialize QR Code
+    updateQRCode();
+
+    // High Quality PDF Export
+    document.getElementById('downloadPdfBtn').addEventListener('click', async () => {
+      const btn = document.getElementById('downloadPdfBtn');
+      btn.innerText = 'Generating HD PDF...';
+      btn.disabled = true;
+
+      try {
+        const { jsPDF } = window.jspdf;
+        const cardFront = document.getElementById('cardFront');
+        const cardBack = document.getElementById('cardBack');
+
+        // Scale 3x for Crisp Printing Quality (300 DPI feel)
+        const opts = {
+          scale: 3,
+          useCORS: true,
+          logging: false
+        };
+
+        const canvasFront = await html2canvas(cardFront, opts);
+        const canvasBack = await html2canvas(cardBack, opts);
+
+        const imgFront = canvasFront.toDataURL('image/png');
+        const imgBack = canvasBack.toDataURL('image/png');
+
+        // PDF Dimensions for standard ID Card (85.6mm x 53.9mm)
+        const pdf = new jsPDF({
+          orientation: 'portrait',
+          unit: 'mm',
+          format: [54, 86]
+        });
+
+        // Add Front
+        pdf.addImage(imgFront, 'PNG', 0, 0, 54, 86);
+        
+        // Add Back Page
+        pdf.addPage([54, 86], 'portrait');
+        pdf.addImage(imgBack, 'PNG', 0, 0, 54, 86);
+
+        const filename = `${holderName.value.replace(/\s+/g, '_')}_ID_Card.pdf`;
+        pdf.save(filename);
+      } catch (err) {
+        alert('PDF Generation failed: ' + err.message);
+      } finally {
+        btn.innerText = 'Download HD PDF (Front & Back)';
+        btn.disabled = false;
+      }
+    });
+  </script>
 </body>
 </html>
