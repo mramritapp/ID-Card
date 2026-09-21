@@ -1,113 +1,376 @@
 <!DOCTYPE html>
-<html lang="hi">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Coming Soon</title>
+  <title>Ultra Photo Compressor Studio</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
   <style>
+    :root {
+      --accent: #00F0FF;
+      --accent-hover: #00C8D6;
+      --bg-dark: #07090E;
+      --panel-bg: rgba(255, 255, 255, 0.05);
+      --panel-border: rgba(255, 255, 255, 0.12);
+      --text-main: #FFFFFF;
+      --text-muted: #94A3B8;
+    }
+
     * {
+      box-sizing: border-box;
       margin: 0;
       padding: 0;
-      box-sizing: border-box;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-family: 'Inter', sans-serif;
     }
 
-    body {
-      min-height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      overflow: hidden;
-      /* बहते हुए मल्टी-कलर बैकग्राउंड का ग्रेडिएंट */
-      background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab, #8a2be2);
-      background-size: 400% 400%;
-      animation: gradientFlow 10s ease infinite;
+    html, body {
+      width: 100vw;
+      height: 100vh;
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      overflow-x: hidden;
     }
 
-    /* बैकग्राउंड कलर्स का फ्लो (Animation) */
-    @keyframes gradientFlow {
-      0% {
-        background-position: 0% 50%;
-      }
-      50% {
-        background-position: 100% 50%;
-      }
-      100% {
-        background-position: 0% 50%;
-      }
-    }
-
-    /* बीच का लिक्विड ग्लास बॉक्स (Liquid Glass Box) */
-    .glass-box {
-      position: relative;
-      padding: 50px 80px;
-      background: rgba(255, 255, 255, 0.15);
-      border-radius: 25px;
-      backdrop-filter: blur(15px);
-      -webkit-backdrop-filter: blur(15px);
-      border: 1px solid rgba(255, 255, 255, 0.3);
-      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.25),
-                  inset 0 0 15px rgba(255, 255, 255, 0.2);
-      text-align: center;
-      overflow: hidden;
-    }
-
-    /* लिक्विड ग्लास पर शाइन/रिफ्लेक्शन इफेक्ट */
-    .glass-box::before {
-      content: '';
+    .orb {
       position: absolute;
-      top: -50%;
-      left: -50%;
-      width: 200%;
-      height: 200%;
-      background: linear-gradient(
-        45deg,
-        transparent,
-        rgba(255, 255, 255, 0.13),
-        transparent
-      );
-      transform: rotate(45deg);
-      animation: glassShine 6s infinite;
+      border-radius: 50%;
+      filter: blur(90px);
+      z-index: 0;
+      pointer-events: none;
+    }
+    .orb-1 { width: 300px; height: 300px; background: rgba(0, 240, 255, 0.15); top: -50px; left: -50px; }
+    .orb-2 { width: 350px; height: 350px; background: rgba(138, 43, 226, 0.15); bottom: -50px; right: -50px; }
+
+    header {
+      position: relative;
+      z-index: 10;
+      height: 60px;
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--panel-border);
+      background: rgba(7, 9, 14, 0.6);
+      backdrop-filter: blur(12px);
+    }
+    .app-title { font-size: 1.1rem; font-weight: 700; }
+    .app-title span { color: var(--accent); }
+
+    .main-layout {
+      position: relative;
+      z-index: 5;
+      max-width: 1100px;
+      margin: 20px auto;
+      padding: 0 16px;
+      display: grid;
+      grid-template-columns: 340px 1fr;
+      gap: 20px;
     }
 
-    @keyframes glassShine {
-      0% {
-        transform: translateY(-100%) rotate(45deg);
-      }
-      100% {
-        transform: translateY(100%) rotate(45deg);
-      }
+    .glass-card {
+      background: var(--panel-bg);
+      border: 1px solid var(--panel-border);
+      backdrop-filter: blur(20px);
+      border-radius: 14px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
     }
 
-    /* "Coming Soon" लिखा हुआ टेक्स्ट */
-    .glass-box h1 {
-      color: #ffffff;
-      font-size: 3.5rem;
-      font-weight: 800;
-      letter-spacing: 4px;
+    .section-title {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--accent);
       text-transform: uppercase;
-      text-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+      letter-spacing: 1px;
     }
 
-    /* मोबाइल स्क्रीन के लिए रेस्पॉन्सिव */
-    @media (max-width: 600px) {
-      .glass-box {
-        padding: 35px 40px;
-        width: 85%;
-      }
-      .glass-box h1 {
-        font-size: 2rem;
-        letter-spacing: 2px;
-      }
+    .upload-box {
+      border: 2px dashed var(--panel-border);
+      border-radius: 10px;
+      padding: 24px 12px;
+      text-align: center;
+      cursor: pointer;
+      background: rgba(255,255,255,0.02);
+      position: relative;
+      transition: all 0.3s ease;
+    }
+    .upload-box:hover {
+      border-color: var(--accent);
+      background: rgba(0, 240, 255, 0.04);
+    }
+    .upload-box input {
+      position: absolute;
+      width: 100%; height: 100%;
+      top: 0; left: 0;
+      opacity: 0; cursor: pointer;
+    }
+    .upload-label { font-size: 0.9rem; font-weight: 600; }
+    .upload-sub { font-size: 0.75rem; color: var(--text-muted); margin-top: 4px; }
+
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .control-group label {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      display: flex;
+      justify-content: space-between;
+    }
+
+    select, input[type="range"] {
+      width: 100%;
+      background: rgba(0,0,0,0.4);
+      border: 1px solid var(--panel-border);
+      border-radius: 8px;
+      padding: 8px;
+      color: #fff;
+      font-size: 0.85rem;
+      outline: none;
+    }
+    input[type="range"] {
+      accent-color: var(--accent);
+      padding: 0;
+      height: 6px;
+      cursor: pointer;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: 0.2s ease;
+    }
+    .btn-primary { background: var(--accent); color: #000; }
+    .btn-primary:hover { background: var(--accent-hover); }
+    .btn-secondary { background: rgba(255,255,255,0.1); color: #fff; border: 1px solid var(--panel-border); }
+
+    .preview-stage {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .preview-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .image-card {
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid var(--panel-border);
+      border-radius: 12px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .image-card img {
+      max-width: 100%;
+      max-height: 320px;
+      object-fit: contain;
+      border-radius: 6px;
+    }
+
+    .info-badge {
+      font-size: 0.75rem;
+      background: rgba(255,255,255,0.08);
+      padding: 6px 12px;
+      border-radius: 20px;
+      color: var(--text-muted);
+      width: 100%;
+      text-align: center;
+    }
+    .info-badge span { color: #fff; font-weight: 600; }
+
+    @media (max-width: 768px) {
+      .main-layout { grid-template-columns: 1fr; }
+      .preview-grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
 <body>
 
-  <!-- बीच में लिक्विड ग्लास बॉक्स -->
-  <div class="glass-box">
-    <h1>Coming Soon</h1>
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+
+  <header>
+    <div class="app-title">Ultra <span>Photo Compressor</span></div>
+  </header>
+
+  <div class="main-layout">
+    
+    <!-- Controls Panel -->
+    <div class="glass-card">
+      <div class="section-title">1. Upload Image</div>
+      <div class="upload-box" onclick="document.getElementById('imageInput').click()">
+        <div class="upload-label">Select Photo</div>
+        <div class="upload-sub" id="uploadStatus">Click or Drag Image Here</div>
+        <input type="file" id="imageInput" accept="image/*">
+      </div>
+
+      <div class="section-title" style="margin-top: 8px;">2. Compression Settings</div>
+
+      <div class="control-group">
+        <label><span>Quality</span><span id="qualityVal">80%</span></label>
+        <input type="range" id="qualitySlider" min="5" max="100" value="80">
+      </div>
+
+      <div class="control-group">
+        <label><span>Max Width (Scale)</span><span id="scaleVal">100%</span></label>
+        <input type="range" id="scaleSlider" min="10" max="100" value="100">
+      </div>
+
+      <div class="control-group">
+        <label>Output Format</label>
+        <select id="formatSelect">
+          <option value="image/jpeg">JPG (Best Compression)</option>
+          <option value="image/webp">WEBP (Ultra Small Size)</option>
+          <option value="image/png">PNG (Lossless)</option>
+        </select>
+      </div>
+
+      <button class="btn btn-primary" id="downloadBtn" style="margin-top: auto;" disabled>Download Compressed Photo</button>
+    </div>
+
+    <!-- Preview Panel -->
+    <div class="preview-stage">
+      <div class="preview-grid">
+        
+        <div class="image-card">
+          <div class="section-title">Original Image</div>
+          <img id="originalImg" src="" style="display:none;" alt="Original">
+          <div class="info-badge" id="origInfo">Size: <span>0 KB</span></div>
+        </div>
+
+        <div class="image-card">
+          <div class="section-title">Compressed Preview</div>
+          <img id="compressedImg" src="" style="display:none;" alt="Compressed">
+          <div class="info-badge" id="compInfo">Size: <span>0 KB</span></div>
+        </div>
+
+      </div>
+    </div>
+
   </div>
 
+  <script>
+    const imageInput = document.getElementById('imageInput');
+    const uploadStatus = document.getElementById('uploadStatus');
+    const qualitySlider = document.getElementById('qualitySlider');
+    const scaleSlider = document.getElementById('scaleSlider');
+    const formatSelect = document.getElementById('formatSelect');
+    
+    const qualityVal = document.getElementById('qualityVal');
+    const scaleVal = document.getElementById('scaleVal');
+    
+    const originalImg = document.getElementById('originalImg');
+    const compressedImg = document.getElementById('compressedImg');
+    const origInfo = document.getElementById('origInfo');
+    const compInfo = document.getElementById('compInfo');
+    const downloadBtn = document.getElementById('downloadBtn');
+
+    let loadedImage = null;
+    let originalFileSize = 0;
+
+    function formatBytes(bytes) {
+      if (bytes === 0) return '0 KB';
+      const k = 1024;
+      const sizes = ['Bytes', 'KB', 'MB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    imageInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      originalFileSize = file.size;
+      uploadStatus.innerText = file.name;
+      
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const img = new Image();
+        img.onload = () => {
+          loadedImage = img;
+          originalImg.src = event.target.result;
+          originalImg.style.display = 'block';
+          origInfo.innerHTML = `Size: <span>${formatBytes(originalFileSize)}</span> (${img.width}x${img.height})`;
+          
+          downloadBtn.disabled = false;
+          processCompression();
+        };
+        img.src = event.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+
+    function processCompression() {
+      if (!loadedImage) return;
+
+      const quality = parseInt(qualitySlider.value) / 100;
+      const scale = parseInt(scaleSlider.value) / 100;
+      const format = formatSelect.value;
+
+      qualityVal.innerText = `${qualitySlider.value}%`;
+      scaleVal.innerText = `${scaleSlider.value}%`;
+
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+
+      const targetWidth = Math.round(loadedImage.width * scale);
+      const targetHeight = Math.round(loadedImage.height * scale);
+
+      canvas.width = targetWidth;
+      canvas.height = targetHeight;
+
+      // Draw and Smooth Image
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+      ctx.drawImage(loadedImage, 0, 0, targetWidth, targetHeight);
+
+      const compressedDataUrl = canvas.toDataURL(format, quality);
+
+      compressedImg.src = compressedDataUrl;
+      compressedImg.style.display = 'block';
+
+      // Calculate base64 file size
+      const head = `data:${format};base64,`;
+      const sizeInBytes = Math.round((compressedDataUrl.length - head.length) * 3 / 4);
+
+      const savings = Math.round(((originalFileSize - sizeInBytes) / originalFileSize) * 100);
+      const savingsText = savings > 0 ? ` [${savings}% Reduced]` : '';
+
+      compInfo.innerHTML = `Size: <span>${formatBytes(sizeInBytes)}</span>${savingsText}`;
+    }
+
+    [qualitySlider, scaleSlider, formatSelect].forEach(el => {
+      el.addEventListener('input', processCompression);
+    });
+
+    downloadBtn.addEventListener('click', () => {
+      if (!compressedImg.src) return;
+      
+      const ext = formatSelect.value.split('/')[1];
+      const link = document.createElement('a');
+      link.download = `compressed_photo.${ext}`;
+      link.href = compressedImg.src;
+      link.click();
+    });
+  </script>
 </body>
 </html>
