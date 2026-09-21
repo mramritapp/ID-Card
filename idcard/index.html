@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>A4 ID Card Print Layout Studio - Uncompressed</title>
+  <title>A4 ID Card Print Layout Studio</title>
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -155,9 +155,15 @@
 
     .btn-group {
       display: flex;
+      flex-direction: column;
       gap: 8px;
       margin-top: auto;
       padding-top: 8px;
+    }
+
+    .btn-row {
+      display: flex;
+      gap: 8px;
     }
 
     .btn {
@@ -171,6 +177,8 @@
     }
     .btn-primary { background: var(--accent); color: #000; }
     .btn-secondary { background: rgba(255,255,255,0.1); color: #fff; border: 1px solid var(--panel-border); }
+    .btn-reset { background: rgba(255, 59, 48, 0.15); color: #FF453A; border: 1px solid rgba(255, 59, 48, 0.3); }
+    .btn-reset:hover { background: rgba(255, 59, 48, 0.25); }
 
     .preview-stage {
       display: flex;
@@ -199,13 +207,16 @@
       transform-origin: top left;
     }
 
+    /* Clean Image Style (No Boundary/Border) */
     .id-card-img {
       object-fit: fill;
-      border: 1px dashed #ccc;
-      background: #f8fafc;
+      border: none !important;
+      outline: none !important;
+      box-shadow: none !important;
+      background: transparent;
     }
 
-    /* Cropper Standard Style Overlay */
+    /* Cropper Red Styling Overlay */
     .modal {
       position: fixed;
       top: 0; left: 0; width: 100vw; height: 100vh;
@@ -223,6 +234,20 @@
       height: 70vh;
       max-width: 800px;
       background: #000;
+    }
+
+    /* Custom Red Color for Cropper Handles & Lines */
+    .cropper-view-box {
+      outline: 2px solid #FF0000 !important;
+    }
+    .cropper-line {
+      background-color: #FF0000 !important;
+    }
+    .cropper-point {
+      background-color: #FF0000 !important;
+      width: 10px !important;
+      height: 10px !important;
+      opacity: 1 !important;
     }
 
     @media (max-width: 800px) {
@@ -258,7 +283,7 @@
         </div>
       </div>
 
-      <div class="section-title" style="margin-top: 4px;">2. Complete Custom Controls</div>
+      <div class="section-title" style="margin-top: 4px;">2. Page Layout Controls</div>
       
       <div class="control-group">
         <label>Layout Mode</label>
@@ -269,33 +294,27 @@
       </div>
 
       <div class="control-group">
-        <label><span>Card Width</span><span id="widthVal">85 mm</span></label>
-        <input type="range" id="widthSlider" min="30" max="180" value="85">
-      </div>
-
-      <div class="control-group">
-        <label><span>Card Height</span><span id="heightVal">54 mm</span></label>
-        <input type="range" id="heightSlider" min="20" max="120" value="54">
-      </div>
-
-      <div class="control-group">
         <label><span>Card Gap</span><span id="gapVal">10 mm</span></label>
         <input type="range" id="gapSlider" min="0" max="100" value="10">
       </div>
 
       <div class="control-group">
-        <label><span>Move Horizontal (X)</span><span id="posXVal">0 mm</span></label>
-        <input type="range" id="posXSlider" min="0" max="120" value="15">
+        <label><span>Move Horizontal (X)</span><span id="posXVal">15 mm</span></label>
+        <input type="range" id="posXSlider" min="0" max="150" value="15">
       </div>
 
       <div class="control-group">
-        <label><span>Move Vertical (Y)</span><span id="posYVal">0 mm</span></label>
+        <label><span>Move Vertical (Y)</span><span id="posYVal">20 mm</span></label>
         <input type="range" id="posYSlider" min="0" max="200" value="20">
       </div>
 
+      <button class="btn btn-reset" id="resetBtn">Reset Settings</button>
+
       <div class="btn-group">
-        <button class="btn btn-secondary" id="downloadJpgBtn">Ultra-HD JPG</button>
-        <button class="btn btn-primary" id="downloadPdfBtn">Original PDF (100% Quality)</button>
+        <div class="btn-row">
+          <button class="btn btn-secondary" id="downloadJpgBtn">Ultra-HD JPG</button>
+          <button class="btn btn-primary" id="downloadPdfBtn">Original PDF</button>
+        </div>
       </div>
     </div>
 
@@ -310,6 +329,7 @@
 
   </div>
 
+  <!-- Crop Modal -->
   <div class="modal" id="cropModal">
     <div class="cropper-container-wrapper">
       <img id="cropperImage" src="" style="max-width: 100%;">
@@ -327,17 +347,15 @@
     const backStatus = document.getElementById('backStatus');
     
     const layoutSelect = document.getElementById('layoutSelect');
-    const widthSlider = document.getElementById('widthSlider');
-    const heightSlider = document.getElementById('heightSlider');
     const gapSlider = document.getElementById('gapSlider');
     const posXSlider = document.getElementById('posXSlider');
     const posYSlider = document.getElementById('posYSlider');
 
-    const widthVal = document.getElementById('widthVal');
-    const heightVal = document.getElementById('heightVal');
     const gapVal = document.getElementById('gapVal');
     const posXVal = document.getElementById('posXVal');
     const posYVal = document.getElementById('posYVal');
+
+    const resetBtn = document.getElementById('resetBtn');
 
     const cardsWrapper = document.getElementById('cardsWrapper');
     const imgFrontPrev = document.getElementById('imgFrontPrev');
@@ -350,6 +368,10 @@
 
     let cropper = null;
     let activeSide = null;
+
+    // Standard ID Card Size (85.6mm x 53.98mm)
+    const CARD_WIDTH_MM = 85.6;
+    const CARD_HEIGHT_MM = 54;
 
     function handleFileSelect(file, side) {
       if (!file) return;
@@ -386,7 +408,6 @@
     applyCropBtn.addEventListener('click', () => {
       if (!cropper) return;
       
-      // Full Original Quality Canvas Extraction
       const canvas = cropper.getCroppedCanvas({
         imageSmoothingEnabled: true,
         imageSmoothingQuality: 'high'
@@ -411,40 +432,48 @@
 
     function updateLayout() {
       const isTopDown = layoutSelect.value === 'topdown';
-      const w = parseInt(widthSlider.value);
-      const h = parseInt(heightSlider.value);
       const gap = parseInt(gapSlider.value);
       const posX = parseInt(posXSlider.value);
       const posY = parseInt(posYSlider.value);
 
-      widthVal.innerText = `${w} mm`;
-      heightVal.innerText = `${h} mm`;
       gapVal.innerText = `${gap} mm`;
       posXVal.innerText = `${posX} mm`;
       posYVal.innerText = `${posY} mm`;
 
-      const pxFactor = 380 / 210; // A4 Web Ratio (380px preview width = 210mm)
+      const pxFactor = 380 / 210; // A4 Web Scale Factor
 
       cardsWrapper.style.flexDirection = isTopDown ? 'column' : 'row';
       cardsWrapper.style.gap = `${gap * pxFactor}px`;
       cardsWrapper.style.left = `${posX * pxFactor}px`;
       cardsWrapper.style.top = `${posY * pxFactor}px`;
 
+      const cardPxWidth = CARD_WIDTH_MM * pxFactor;
+      const cardPxHeight = CARD_HEIGHT_MM * pxFactor;
+
       [imgFrontPrev, imgBackPrev].forEach(img => {
-        img.style.width = `${w * pxFactor}px`;
-        img.style.height = `${h * pxFactor}px`;
+        img.style.width = `${cardPxWidth}px`;
+        img.style.height = `${cardPxHeight}px`;
       });
     }
 
-    [layoutSelect, widthSlider, heightSlider, gapSlider, posXSlider, posYSlider].forEach(el => {
+    // Reset to Default Setup
+    resetBtn.addEventListener('click', () => {
+      layoutSelect.value = 'topdown';
+      gapSlider.value = 10;
+      posXSlider.value = 15;
+      posYSlider.value = 20;
+      updateLayout();
+    });
+
+    [layoutSelect, gapSlider, posXSlider, posYSlider].forEach(el => {
       el.addEventListener('input', updateLayout);
     });
 
-    // 0% Compression Ultra-HD Render Engine
+    // 0% Compression Ultra-HD Output
     async function generateA4Canvas() {
       const page = document.getElementById('a4Page');
       return await html2canvas(page, {
-        scale: 4, // 4x Native Quality Scale for Crisp 100% Quality Output
+        scale: 4,
         useCORS: true,
         logging: false,
         backgroundColor: '#FFFFFF'
@@ -454,8 +483,8 @@
     document.getElementById('downloadJpgBtn').addEventListener('click', async () => {
       const canvas = await generateA4Canvas();
       const link = document.createElement('a');
-      link.download = 'A4_ID_Card_Original.jpg';
-      link.href = canvas.toDataURL('image/jpeg', 1.0); // 1.0 = 0% Compression
+      link.download = 'A4_ID_Card_Print.jpg';
+      link.href = canvas.toDataURL('image/jpeg', 1.0);
       link.click();
     });
 
@@ -466,7 +495,7 @@
       const { jsPDF } = window.jspdf;
       const pdf = new jsPDF('p', 'mm', 'a4');
       pdf.addImage(imgData, 'JPEG', 0, 0, 210, 297, undefined, 'FAST');
-      pdf.save('A4_ID_Card_Original.pdf');
+      pdf.save('A4_ID_Card_Print.pdf');
     });
 
     updateLayout();
