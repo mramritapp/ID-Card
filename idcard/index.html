@@ -3,17 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>A4 ID Card Print Layout Studio</title>
+  <title>A4 ID Card Print Layout Studio - Uncompressed</title>
   
-  <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   
-  <!-- Cropper.js CSS -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css"/>
   
-  <!-- Libraries: Cropper, html2canvas, jsPDF -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -44,7 +41,6 @@
       overflow: hidden;
     }
 
-    /* Ambient Glow Orbs */
     .orb {
       position: absolute;
       border-radius: 50%;
@@ -67,7 +63,7 @@
       background: rgba(7, 9, 14, 0.6);
       backdrop-filter: blur(12px);
     }
-    .app-title { font-size: 1rem; font-weight: 700; letter-spacing: 0.5px; }
+    .app-title { font-size: 1rem; font-weight: 700; }
     .app-title span { color: var(--accent); }
 
     .main-layout {
@@ -75,7 +71,7 @@
       z-index: 5;
       height: calc(100vh - 50px);
       display: grid;
-      grid-template-columns: 340px 1fr;
+      grid-template-columns: 350px 1fr;
       gap: 16px;
       padding: 16px;
     }
@@ -88,10 +84,7 @@
       padding: 16px;
       display: flex;
       flex-direction: column;
-      gap: 14px;
-    }
-
-    .controls-panel {
+      gap: 12px;
       overflow-y: auto;
     }
 
@@ -116,7 +109,6 @@
       text-align: center;
       cursor: pointer;
       background: rgba(255,255,255,0.02);
-      transition: all 0.2s;
       position: relative;
     }
     .upload-box:hover {
@@ -125,22 +117,20 @@
     }
     .upload-box input {
       position: absolute;
-      width: 100%;
-      height: 100%;
+      width: 100%; height: 100%;
       top: 0; left: 0;
-      opacity: 0;
-      cursor: pointer;
+      opacity: 0; cursor: pointer;
     }
-    .upload-label { font-size: 0.75rem; font-weight: 600; color: var(--text-main); }
+    .upload-label { font-size: 0.75rem; font-weight: 600; }
     .upload-sub { font-size: 0.65rem; color: var(--text-muted); margin-top: 2px; }
 
     .control-group {
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 4px;
     }
     .control-group label {
-      font-size: 0.75rem;
+      font-size: 0.72rem;
       color: var(--text-muted);
       display: flex;
       justify-content: space-between;
@@ -151,7 +141,7 @@
       background: rgba(0,0,0,0.4);
       border: 1px solid var(--panel-border);
       border-radius: 6px;
-      padding: 8px;
+      padding: 6px;
       color: #fff;
       font-size: 0.8rem;
       outline: none;
@@ -167,6 +157,7 @@
       display: flex;
       gap: 8px;
       margin-top: auto;
+      padding-top: 8px;
     }
 
     .btn {
@@ -177,14 +168,10 @@
       font-size: 0.8rem;
       font-weight: 600;
       cursor: pointer;
-      transition: all 0.2s;
     }
     .btn-primary { background: var(--accent); color: #000; }
-    .btn-primary:hover { background: var(--accent-hover); }
     .btn-secondary { background: rgba(255,255,255,0.1); color: #fff; border: 1px solid var(--panel-border); }
-    .btn-secondary:hover { background: rgba(255,255,255,0.18); }
 
-    /* Preview Canvas Area */
     .preview-stage {
       display: flex;
       align-items: center;
@@ -195,39 +182,34 @@
       position: relative;
     }
 
-    /* Standard A4 Aspect Ratio Canvas Container */
     .a4-page {
       width: 380px;
-      height: 537px; /* Maintains 210 x 297 mm Ratio */
+      height: 537px;
       background: #FFFFFF;
       box-shadow: 0 10px 30px rgba(0,0,0,0.5);
       position: relative;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-      box-sizing: border-box;
+      overflow: hidden;
     }
 
-    .card-container {
+    .cards-wrapper {
+      position: absolute;
       display: flex;
       align-items: center;
       justify-content: center;
-      width: 100%;
-      height: 100%;
+      transform-origin: top left;
     }
 
     .id-card-img {
-      object-fit: contain;
+      object-fit: fill;
       border: 1px dashed #ccc;
       background: #f8fafc;
     }
 
-    /* Modal Styling for Cropper */
+    /* Cropper Standard Style Overlay */
     .modal {
       position: fixed;
       top: 0; left: 0; width: 100vw; height: 100vh;
-      background: rgba(0,0,0,0.85);
+      background: rgba(0,0,0,0.9);
       backdrop-filter: blur(10px);
       z-index: 100;
       display: none;
@@ -237,27 +219,10 @@
       gap: 16px;
     }
     .cropper-container-wrapper {
-      max-width: 80vw;
-      max-height: 70vh;
-      width: 600px;
-      height: 400px;
-      background: #111;
-      border-radius: 8px;
-      overflow: hidden;
-    }
-
-    /* Cropper Line Visibility Override */
-    .cropper-view-box {
-      outline: 2px solid var(--accent) !important;
-      outline-color: var(--accent) !important;
-    }
-    .cropper-line, .cropper-point {
-      background-color: #FF0055 !important; /* High contrast pink/red for dark & light backgrounds */
-      opacity: 0.9 !important;
-    }
-    .cropper-point.point-se {
-      width: 8px !important;
-      height: 8px !important;
+      width: 85vw;
+      height: 70vh;
+      max-width: 800px;
+      background: #000;
     }
 
     @media (max-width: 800px) {
@@ -278,26 +243,25 @@
 
   <div class="main-layout">
     
-    <!-- Controls -->
-    <div class="glass-card controls-panel">
+    <div class="glass-card">
       <div class="section-title">1. Upload Cards</div>
       <div class="upload-grid">
         <div class="upload-box" onclick="document.getElementById('frontInput').click()">
           <div class="upload-label">Front Side</div>
-          <div class="upload-sub" id="frontStatus">Click to Upload</div>
+          <div class="upload-sub" id="frontStatus">Upload Photo</div>
           <input type="file" id="frontInput" accept="image/*" onclick="event.stopPropagation()">
         </div>
         <div class="upload-box" onclick="document.getElementById('backInput').click()">
           <div class="upload-label">Back Side</div>
-          <div class="upload-sub" id="backStatus">Click to Upload</div>
+          <div class="upload-sub" id="backStatus">Upload Photo</div>
           <input type="file" id="backInput" accept="image/*" onclick="event.stopPropagation()">
         </div>
       </div>
 
-      <div class="section-title" style="margin-top: 8px;">2. Print Layout</div>
+      <div class="section-title" style="margin-top: 4px;">2. Complete Custom Controls</div>
       
       <div class="control-group">
-        <label>Orientation Mode</label>
+        <label>Layout Mode</label>
         <select id="layoutSelect">
           <option value="side">Side by Side</option>
           <option value="topdown" selected>Top & Bottom (Upar-Niche)</option>
@@ -305,25 +269,39 @@
       </div>
 
       <div class="control-group">
-        <label><span>Card Scale</span><span id="scaleVal">85 mm</span></label>
-        <input type="range" id="scaleSlider" min="50" max="130" value="85">
+        <label><span>Card Width</span><span id="widthVal">85 mm</span></label>
+        <input type="range" id="widthSlider" min="30" max="180" value="85">
+      </div>
+
+      <div class="control-group">
+        <label><span>Card Height</span><span id="heightVal">54 mm</span></label>
+        <input type="range" id="heightSlider" min="20" max="120" value="54">
       </div>
 
       <div class="control-group">
         <label><span>Card Gap</span><span id="gapVal">10 mm</span></label>
-        <input type="range" id="gapSlider" min="0" max="50" value="10">
+        <input type="range" id="gapSlider" min="0" max="100" value="10">
+      </div>
+
+      <div class="control-group">
+        <label><span>Move Horizontal (X)</span><span id="posXVal">0 mm</span></label>
+        <input type="range" id="posXSlider" min="0" max="120" value="15">
+      </div>
+
+      <div class="control-group">
+        <label><span>Move Vertical (Y)</span><span id="posYVal">0 mm</span></label>
+        <input type="range" id="posYSlider" min="0" max="200" value="20">
       </div>
 
       <div class="btn-group">
-        <button class="btn btn-secondary" id="downloadJpgBtn">JPG</button>
-        <button class="btn btn-primary" id="downloadPdfBtn">PDF (300 DPI)</button>
+        <button class="btn btn-secondary" id="downloadJpgBtn">Ultra-HD JPG</button>
+        <button class="btn btn-primary" id="downloadPdfBtn">Original PDF (100% Quality)</button>
       </div>
     </div>
 
-    <!-- Live Preview Stage -->
     <div class="preview-stage">
       <div class="a4-page" id="a4Page">
-        <div class="card-container" id="cardContainer">
+        <div class="cards-wrapper" id="cardsWrapper">
           <img id="imgFrontPrev" class="id-card-img" style="display:none;" alt="Front">
           <img id="imgBackPrev" class="id-card-img" style="display:none;" alt="Back">
         </div>
@@ -332,31 +310,36 @@
 
   </div>
 
-  <!-- Crop Modal -->
   <div class="modal" id="cropModal">
     <div class="cropper-container-wrapper">
       <img id="cropperImage" src="" style="max-width: 100%;">
     </div>
     <div style="display: flex; gap: 10px;">
       <button class="btn btn-secondary" id="cancelCropBtn" style="width: 100px;">Cancel</button>
-      <button class="btn btn-primary" id="applyCropBtn" style="width: 140px;">Apply Crop</button>
+      <button class="btn btn-primary" id="applyCropBtn" style="width: 140px;">Crop & Save</button>
     </div>
   </div>
 
   <script>
-    // Elements
     const frontInput = document.getElementById('frontInput');
     const backInput = document.getElementById('backInput');
     const frontStatus = document.getElementById('frontStatus');
     const backStatus = document.getElementById('backStatus');
     
     const layoutSelect = document.getElementById('layoutSelect');
-    const scaleSlider = document.getElementById('scaleSlider');
+    const widthSlider = document.getElementById('widthSlider');
+    const heightSlider = document.getElementById('heightSlider');
     const gapSlider = document.getElementById('gapSlider');
-    const scaleVal = document.getElementById('scaleVal');
-    const gapVal = document.getElementById('gapVal');
+    const posXSlider = document.getElementById('posXSlider');
+    const posYSlider = document.getElementById('posYSlider');
 
-    const cardContainer = document.getElementById('cardContainer');
+    const widthVal = document.getElementById('widthVal');
+    const heightVal = document.getElementById('heightVal');
+    const gapVal = document.getElementById('gapVal');
+    const posXVal = document.getElementById('posXVal');
+    const posYVal = document.getElementById('posYVal');
+
+    const cardsWrapper = document.getElementById('cardsWrapper');
     const imgFrontPrev = document.getElementById('imgFrontPrev');
     const imgBackPrev = document.getElementById('imgBackPrev');
 
@@ -366,9 +349,8 @@
     const cancelCropBtn = document.getElementById('cancelCropBtn');
 
     let cropper = null;
-    let activeSide = null; // 'front' or 'back'
+    let activeSide = null;
 
-    // Image Upload & Crop Trigger
     function handleFileSelect(file, side) {
       if (!file) return;
       activeSide = side;
@@ -379,10 +361,13 @@
         
         if (cropper) cropper.destroy();
         cropper = new Cropper(cropperImage, {
-          viewMode: 1,
-          autoCropArea: 0.9,
+          viewMode: 0,
+          freeRatio: true,
+          autoCropArea: 1,
           responsive: true,
-          restore: false
+          guides: true,
+          center: true,
+          highlight: true
         });
       };
       reader.readAsDataURL(file);
@@ -400,12 +385,14 @@
 
     applyCropBtn.addEventListener('click', () => {
       if (!cropper) return;
+      
+      // Full Original Quality Canvas Extraction
       const canvas = cropper.getCroppedCanvas({
         imageSmoothingEnabled: true,
         imageSmoothingQuality: 'high'
       });
 
-      const croppedDataUrl = canvas.toDataURL('image/png');
+      const croppedDataUrl = canvas.toDataURL('image/png', 1.0);
 
       if (activeSide === 'front') {
         imgFrontPrev.src = croppedDataUrl;
@@ -422,48 +409,44 @@
       updateLayout();
     });
 
-    // Layout Update & Boundaries Constraint Logic
     function updateLayout() {
       const isTopDown = layoutSelect.value === 'topdown';
+      const w = parseInt(widthSlider.value);
+      const h = parseInt(heightSlider.value);
       const gap = parseInt(gapSlider.value);
-      let scale = parseInt(scaleSlider.value);
+      const posX = parseInt(posXSlider.value);
+      const posY = parseInt(posYSlider.value);
 
-      // Max Constraints based on A4 aspect limits
-      // Page display width: 380px, height: 537px
-      const maxAllowedWidth = isTopDown ? 320 : 160; 
-      const maxAllowedHeight = isTopDown ? 220 : 440;
-
-      // Restrict scale value to prevent overflowing A4 page border
-      if (scale * 3.2 > maxAllowedWidth) {
-        scale = Math.floor(maxAllowedWidth / 3.2);
-      }
-
-      scaleVal.innerText = `${scale} mm`;
+      widthVal.innerText = `${w} mm`;
+      heightVal.innerText = `${h} mm`;
       gapVal.innerText = `${gap} mm`;
+      posXVal.innerText = `${posX} mm`;
+      posYVal.innerText = `${posY} mm`;
 
-      cardContainer.style.flexDirection = isTopDown ? 'column' : 'row';
-      cardContainer.style.gap = `${gap * 0.8}px`;
+      const pxFactor = 380 / 210; // A4 Web Ratio (380px preview width = 210mm)
 
-      // Standard ID Card Proportions (85.6mm x 54mm)
-      const renderWidth = scale * 3.2; // Scaling factor for web A4 container
-      const renderHeight = renderWidth * (54 / 85.6);
+      cardsWrapper.style.flexDirection = isTopDown ? 'column' : 'row';
+      cardsWrapper.style.gap = `${gap * pxFactor}px`;
+      cardsWrapper.style.left = `${posX * pxFactor}px`;
+      cardsWrapper.style.top = `${posY * pxFactor}px`;
 
       [imgFrontPrev, imgBackPrev].forEach(img => {
-        img.style.width = `${renderWidth}px`;
-        img.style.height = `${renderHeight}px`;
+        img.style.width = `${w * pxFactor}px`;
+        img.style.height = `${h * pxFactor}px`;
       });
     }
 
-    layoutSelect.addEventListener('change', updateLayout);
-    scaleSlider.addEventListener('input', updateLayout);
-    gapSlider.addEventListener('input', updateLayout);
+    [layoutSelect, widthSlider, heightSlider, gapSlider, posXSlider, posYSlider].forEach(el => {
+      el.addEventListener('input', updateLayout);
+    });
 
-    // Export Logic (300 DPI A4 Engine)
+    // 0% Compression Ultra-HD Render Engine
     async function generateA4Canvas() {
       const page = document.getElementById('a4Page');
       return await html2canvas(page, {
-        scale: 3, // 3x High Definition Render
+        scale: 4, // 4x Native Quality Scale for Crisp 100% Quality Output
         useCORS: true,
+        logging: false,
         backgroundColor: '#FFFFFF'
       });
     }
@@ -471,23 +454,21 @@
     document.getElementById('downloadJpgBtn').addEventListener('click', async () => {
       const canvas = await generateA4Canvas();
       const link = document.createElement('a');
-      link.download = 'A4_ID_Card_Print.jpg';
-      link.href = canvas.toDataURL('image/jpeg', 0.92);
+      link.download = 'A4_ID_Card_Original.jpg';
+      link.href = canvas.toDataURL('image/jpeg', 1.0); // 1.0 = 0% Compression
       link.click();
     });
 
     document.getElementById('downloadPdfBtn').addEventListener('click', async () => {
       const canvas = await generateA4Canvas();
-      const imgData = canvas.toDataURL('image/jpeg', 0.92);
+      const imgData = canvas.toDataURL('image/jpeg', 1.0);
 
       const { jsPDF } = window.jspdf;
-      // Exact ISO A4 dimensions (210mm x 297mm)
       const pdf = new jsPDF('p', 'mm', 'a4');
-      pdf.addImage(imgData, 'JPEG', 0, 0, 210, 297);
-      pdf.save('A4_ID_Card_Print.pdf');
+      pdf.addImage(imgData, 'JPEG', 0, 0, 210, 297, undefined, 'FAST');
+      pdf.save('A4_ID_Card_Original.pdf');
     });
 
-    // Initial Trigger
     updateLayout();
   </script>
 </body>
