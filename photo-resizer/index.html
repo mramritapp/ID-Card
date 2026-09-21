@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>JPG Resizer & Compressor</title>
+  <title>JPG Photo Resizer & Compressor</title>
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -37,7 +37,6 @@
       overflow: hidden;
     }
 
-    /* Ambient Background Glows */
     .glow-1 {
       position: absolute;
       width: 400px;
@@ -79,9 +78,6 @@
       font-size: 0.8rem;
       font-weight: 500;
       cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 6px;
     }
 
     .app-title {
@@ -99,7 +95,7 @@
       height: calc(100vh - 60px);
       padding: 20px 24px;
       display: grid;
-      grid-template-columns: 340px 1fr;
+      grid-template-columns: 360px 1fr;
       gap: 20px;
     }
 
@@ -111,7 +107,8 @@
       padding: 24px;
       display: flex;
       flex-direction: column;
-      gap: 20px;
+      gap: 18px;
+      overflow-y: auto;
     }
 
     .panel-heading {
@@ -125,7 +122,7 @@
     .upload-box {
       border: 1.5px dashed var(--pink-dashed);
       border-radius: 12px;
-      padding: 32px 16px;
+      padding: 24px 16px;
       text-align: center;
       cursor: pointer;
       background: var(--pink-muted);
@@ -135,7 +132,7 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 10px;
+      gap: 8px;
     }
     .upload-box:hover {
       border-color: var(--pink-primary);
@@ -151,14 +148,41 @@
       cursor: pointer;
     }
     .upload-icon {
-      width: 32px;
-      height: 32px;
+      width: 28px;
+      height: 28px;
       fill: var(--pink-primary);
     }
     .upload-label {
       font-size: 0.85rem;
       font-weight: 600;
       color: #FFFFFF;
+    }
+
+    /* Left Panel Original Info Box */
+    .orig-details-card {
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid var(--panel-border);
+      border-radius: 10px;
+      padding: 12px;
+      display: none;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .orig-details-title {
+      font-size: 0.75rem;
+      color: var(--pink-primary);
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+    .orig-detail-row {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      display: flex;
+      justify-content: space-between;
+    }
+    .orig-detail-row span {
+      color: #FFF;
+      font-weight: 600;
     }
 
     .form-group {
@@ -225,7 +249,6 @@
       font-size: 0.75rem;
       color: var(--text-muted);
       text-align: center;
-      margin-top: -5px;
     }
 
     /* Right Preview Stage */
@@ -244,7 +267,7 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 20px;
+      margin-bottom: 16px;
     }
 
     .badge-view {
@@ -259,6 +282,7 @@
     .preview-container {
       flex: 1;
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
       border-radius: 12px;
@@ -266,6 +290,7 @@
       border: 1px dashed rgba(255, 255, 255, 0.05);
       position: relative;
       overflow: hidden;
+      padding: 20px;
     }
 
     .placeholder-text {
@@ -273,45 +298,31 @@
       font-size: 0.85rem;
     }
 
-    .preview-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 20px;
-      width: 100%;
-      height: 100%;
-      padding: 16px;
-    }
-
-    .preview-card {
-      background: rgba(10, 13, 20, 0.5);
-      border: 1px solid var(--panel-border);
-      border-radius: 10px;
-      padding: 12px;
-      display: flex;
+    .compressed-display {
+      display: none;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 12px;
-    }
-
-    .preview-card img {
-      max-width: 100%;
-      max-height: calc(100vh - 280px);
-      object-fit: contain;
-      border-radius: 6px;
-    }
-
-    .info-tag {
-      font-size: 0.75rem;
-      color: var(--text-muted);
-      background: rgba(255, 255, 255, 0.04);
-      padding: 6px 12px;
-      border-radius: 20px;
+      gap: 16px;
       width: 100%;
-      text-align: center;
+      height: 100%;
     }
-    .info-tag span {
+
+    .compressed-display img {
+      max-width: 100%;
+      max-height: calc(100vh - 250px);
+      object-fit: contain;
+      border-radius: 8px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+
+    .compressed-info-badge {
+      background: rgba(216, 75, 114, 0.15);
+      border: 1px solid var(--pink-dashed);
       color: #FFF;
+      padding: 8px 20px;
+      border-radius: 20px;
+      font-size: 0.85rem;
       font-weight: 600;
     }
 
@@ -334,12 +345,12 @@
 
   <header>
     <button class="btn-home">&larr; Home</button>
-    <div class="app-title">JPG <span>Resizer</span></div>
+    <div class="app-title">JPG <span>Resizer Studio</span></div>
   </header>
 
   <div class="main-layout">
     
-    <!-- Left Sidebar Panel -->
+    <!-- Left Panel -->
     <div class="left-panel">
       <div class="panel-heading">Upload & Resize</div>
 
@@ -349,6 +360,14 @@
         </svg>
         <div class="upload-label" id="fileStatus">Select Image File</div>
         <input type="file" id="fileInput" accept="image/*">
+      </div>
+
+      <!-- Original Image Details Card -->
+      <div class="orig-details-card" id="origDetailsCard">
+        <div class="orig-details-title">Original Image Details</div>
+        <div class="orig-detail-row">File Name: <span id="origName">-</span></div>
+        <div class="orig-detail-row">Original Size: <span id="origSize">-</span></div>
+        <div class="orig-detail-row">Dimensions: <span id="origDim">-</span></div>
       </div>
 
       <div class="form-group">
@@ -369,30 +388,20 @@
       <button class="btn-action" id="downloadBtn" style="margin-top: auto; display: none;">Download JPG</button>
     </div>
 
-    <!-- Right Workspace / Preview Panel -->
+    <!-- Right Workspace Panel -->
     <div class="right-panel">
       <div class="preview-header">
-        <div class="panel-heading">Image Preview</div>
-        <div class="badge-view">Original vs Compressed</div>
+        <div class="panel-heading">Compressed Image Preview</div>
+        <div class="badge-view" id="previewBadge">Result View</div>
       </div>
 
-      <div class="preview-container" id="previewContainer">
-        <div class="placeholder-text" id="placeholderText">Image preview will appear here</div>
+      <div class="preview-container">
+        <div class="placeholder-text" id="placeholderText">Compressed preview will appear here</div>
 
-        <div class="preview-grid" id="previewGrid" style="display: none;">
-          <div class="preview-card">
-            <div class="form-label">Original Image</div>
-            <img id="origImg" src="" alt="Original">
-            <div class="info-tag" id="origInfo">Size: <span>0 KB</span></div>
-          </div>
-
-          <div class="preview-card">
-            <div class="form-label">Compressed Preview</div>
-            <img id="compImg" src="" alt="Compressed">
-            <div class="info-tag" id="compInfo">Size: <span>0 KB</span></div>
-          </div>
+        <div class="compressed-display" id="compressedDisplay">
+          <img id="compImg" src="" alt="Compressed Preview">
+          <div class="compressed-info-badge" id="compBadge">Size: 0 KB</div>
         </div>
-
       </div>
     </div>
 
@@ -401,6 +410,11 @@
   <script>
     const fileInput = document.getElementById('fileInput');
     const fileStatus = document.getElementById('fileStatus');
+    const origDetailsCard = document.getElementById('origDetailsCard');
+    const origName = document.getElementById('origName');
+    const origSize = document.getElementById('origSize');
+    const origDim = document.getElementById('origDim');
+
     const targetSize = document.getElementById('targetSize');
     const sizeUnit = document.getElementById('sizeUnit');
     const processBtn = document.getElementById('processBtn');
@@ -408,11 +422,9 @@
     const statusNote = document.getElementById('statusNote');
 
     const placeholderText = document.getElementById('placeholderText');
-    const previewGrid = document.getElementById('previewGrid');
-    const origImg = document.getElementById('origImg');
+    const compressedDisplay = document.getElementById('compressedDisplay');
     const compImg = document.getElementById('compImg');
-    const origInfo = document.getElementById('origInfo');
-    const compInfo = document.getElementById('compInfo');
+    const compBadge = document.getElementById('compBadge');
 
     let loadedImage = null;
     let originalSizeBytes = 0;
@@ -431,22 +443,23 @@
       if (!file) return;
 
       originalSizeBytes = file.size;
-      fileStatus.innerText = file.name;
+      fileStatus.innerText = 'Change Photo';
+
+      // Set Original Info on Left Side Panel
+      origName.innerText = file.name.length > 20 ? file.name.substring(0, 18) + '...' : file.name;
+      origSize.innerText = formatBytes(originalSizeBytes);
 
       const reader = new FileReader();
       reader.onload = (evt) => {
         const img = new Image();
         img.onload = () => {
           loadedImage = img;
-          origImg.src = evt.target.result;
-          origInfo.innerHTML = `Size: <span>${formatBytes(originalSizeBytes)}</span> (${img.width}x${img.height})`;
-
-          placeholderText.style.display = 'none';
-          previewGrid.style.display = 'grid';
+          origDim.innerText = `${img.width} x ${img.height} px`;
+          origDetailsCard.style.display = 'flex';
 
           processBtn.disabled = false;
           statusNote.innerText = 'Ready to process';
-          
+
           runCompression();
         };
         img.src = evt.target.result;
@@ -461,7 +474,12 @@
 
       const targetVal = parseFloat(targetSize.value) || 200;
       const unit = sizeUnit.value;
-      const maxBytes = unit === 'MB' ? targetVal * 1024 * 1024 : targetVal * 1024;
+      let maxBytes = unit === 'MB' ? targetVal * 1024 * 1024 : targetVal * 1024;
+
+      // Rule: Must be smaller than original size
+      if (maxBytes >= originalSizeBytes) {
+        maxBytes = originalSizeBytes - 100; // Force size to be strictly smaller than original
+      }
 
       statusNote.innerText = 'Processing...';
 
@@ -470,12 +488,12 @@
       let bestResult = null;
       let scale = 1.0;
 
-      // Quality adjustment loop
+      // Double-pass optimization loop
       for (let pass = 0; pass < 2; pass++) {
         minQuality = 0.01;
-        maxQuality = 1.0;
+        maxQuality = 0.98;
 
-        for (let i = 0; i < 8; i++) {
+        for (let i = 0; i < 9; i++) {
           const midQuality = (minQuality + maxQuality) / 2;
           const res = renderJpg(loadedImage, scale, midQuality);
 
@@ -488,7 +506,7 @@
         }
 
         if (bestResult) break;
-        scale *= 0.75; // Downscale dimensions if file is still too big
+        scale *= 0.75; // Downscale dimensions if needed
       }
 
       if (!bestResult) {
@@ -497,9 +515,12 @@
 
       finalCompressedDataUrl = bestResult.dataUrl;
       compImg.src = finalCompressedDataUrl;
-      compInfo.innerHTML = `Size: <span>${formatBytes(bestResult.size)}</span> (${bestResult.width}x${bestResult.height})`;
+      compBadge.innerText = `Compressed Size: ${formatBytes(bestResult.size)} (${bestResult.width}x${bestResult.height})`;
 
-      statusNote.innerText = `Compressed under ${targetVal} ${unit}!`;
+      placeholderText.style.display = 'none';
+      compressedDisplay.style.display = 'flex';
+
+      statusNote.innerText = `Compressed: ${formatBytes(bestResult.size)} (< Original Size)`;
       downloadBtn.style.display = 'block';
     }
 
@@ -513,7 +534,6 @@
       canvas.width = width;
       canvas.height = height;
 
-      // Solid White Canvas Background for JPG
       ctx.fillStyle = '#FFFFFF';
       ctx.fillRect(0, 0, width, height);
 
@@ -531,7 +551,7 @@
     downloadBtn.addEventListener('click', () => {
       if (!finalCompressedDataUrl) return;
       const link = document.createElement('a');
-      link.download = 'resized_photo.jpg';
+      link.download = 'compressed_photo.jpg';
       link.href = finalCompressedDataUrl;
       link.click();
     });
